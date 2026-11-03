@@ -1,7 +1,9 @@
 // Strict input validation shared by the API and the page.
 
 export const SESSION_RE = /^[A-Za-z0-9._~-]{1,256}$/;
-export const RETURN_RE = /^\/(?!\/)[^\s]*$/;
+// "#" is rejected because it would swallow the #gs_jwt= fragment appended after it; a backslash is
+// rejected because browsers normalize "\" to "/", so "/\evil.example" would navigate off-origin.
+export const RETURN_RE = /^\/(?!\/)[^\s#\\]*$/;
 const DEV_LOCALHOST_RE = /^http:\/\/localhost(:[0-9]{1,5})?$/;
 
 /**
@@ -31,7 +33,7 @@ export function validateSession(s) {
   return typeof s === "string" && SESSION_RE.test(s) ? s : null;
 }
 
-/** Return path on the RP origin: starts with "/" but not "//". Returns it or null. */
+/** Return path on the RP origin: starts with "/" but not "//"; no whitespace, "#" or "\". Returns it or null. */
 export function validateReturnPath(p) {
   return typeof p === "string" && RETURN_RE.test(p) ? p : null;
 }

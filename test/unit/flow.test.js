@@ -130,7 +130,7 @@ export default {
       await run(env);
       deepEq(env.lastView(), { kind: "error", code: "bad_request" }, session);
     }
-    for (const ret of ["//evil.example/x", "https://evil.example", "relative", "/a b"]) {
+    for (const ret of ["//evil.example/x", "https://evil.example", "relative", "/a b", "/a#b", "/\\evil.example"]) {
       const env = fakeEnv({ query: rpQuery("s-1", ret) });
       await run(env);
       eq(ctxIn(env).return, "/", ret);

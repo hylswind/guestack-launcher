@@ -31,8 +31,11 @@ export default {
     for (const s of ["a", "abc-DEF_123.~", "x".repeat(256)]) eq(validateSession(s), s);
     for (const s of ["", "x".repeat(257), "a b", "a/b", "a+b", "a=b", "é", null, 1]) eq(validateSession(s), null, String(s));
   },
-  "return path: starts with / but not //, no whitespace": () => {
-    for (const p of ["/", "/a/b?c=d#e", "/%2F%2F"]) eq(validateReturnPath(p), p);
-    for (const p of ["//evil.com", "", "a", "https://evil.com", "/a b", "/a\tb", "/\n", null]) eq(validateReturnPath(p), null, String(p));
+  "return path: starts with / but not //, no whitespace, # or backslash": () => {
+    for (const p of ["/", "/a/b?c=d", "/a?x=1", "/%2F%2F", "/a%23b"]) eq(validateReturnPath(p), p);
+    for (const p of ["//evil.com", "", "a", "https://evil.com", "/a b", "/a\tb", "/\n", null,
+      "/a#b", "/a/b?c=d#e", "/\\evil.example", "/a\\b"]) {
+      eq(validateReturnPath(p), null, String(p));
+    }
   },
 };
