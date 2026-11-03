@@ -1,28 +1,30 @@
-// [generated] Template for functions-project/_generated/config.js (DESIGN.md §4.1, §14).
-// The real file is written by launcher/gen-config.sh at launch, or by launcher/dev-launch.sh
+// [generated] Template for functions-project/_generated/config.js.
+// The real file is written by the launcher at launch, or by launcher/dev-launch.sh
 // for local development. It is git-ignored and must never be committed.
 
 export const LAUNCH_ID = "dev";
 
-// true only in dev-launch.sh builds: allows http://localhost[:port] origins (§6.1 step 6).
+// true only in dev-launch.sh builds: allows http://localhost[:port] RP origins.
 export const DEV = false;
 
-// Origin of the static page deployment: the only allowed CORS origin (§8.2) and the JWT `iss` (§5.2).
+// Origin of the static page deployment: the only allowed CORS origin and the JWT `iss`.
 export const PAGE_ORIGIN = "https://00000000.page-project.pages.dev";
 
-// Operator-managed custom host for the API (§8). Untrusted; not in launch.json.
+// Operator-managed custom host for the API. Untrusted (traffic is end-to-end encrypted);
+// not in launch.json.
 export const API_BASE_URL = "https://api.example";
 
 export const GOOGLE_CLIENT_ID = "";
 export const TELEGRAM_CLIENT_ID = "";
 
-// Integration tests only (§15): base URL of the mock Google/Telegram endpoints. null in production.
+// Integration tests only: base URL of the mock Google/Telegram endpoints. null in production.
 export const PROVIDER_BASE_OVERRIDE = null;
 
 export const JWT_PUBLIC_JWK = { kty: "EC", crv: "P-256", x: "", y: "", kid: "" };
 export const COMM_PUBLIC_JWK = { kty: "EC", crv: "P-256", x: "", y: "" };
 
-// hex SHA-256 of each env value exactly as stored (§4.1, §8.1 secret gate).
+// hex SHA-256 of each env value exactly as stored; checked by the integrity gate in
+// functions/_middleware.js.
 export const SECRET_HASHES = {
   K_UNIVERSAL: "",
   K_PER_RP: "",

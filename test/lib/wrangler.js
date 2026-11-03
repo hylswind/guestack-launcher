@@ -1,5 +1,5 @@
-// Dev-only: start and stop `npx wrangler pages dev` (DECISIONS.md D-04: wrangler is never a
-// dependency; the version is pinned here for reproducibility).
+// Dev-only: start and stop `npx wrangler pages dev`. wrangler is never a dependency; the
+// version is pinned here for reproducibility.
 import { spawn } from "node:child_process";
 import { freePort, sleep } from "./serve.js";
 

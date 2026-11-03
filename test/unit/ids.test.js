@@ -22,7 +22,7 @@ export default {
     const other = uid.slice(); other[0] ^= 1;
     ne(toHex(await perRpId(kP, other, "https://a.com")), PER_RP_HEX["https://a.com"]);
   },
-  "origins are compared as new URL().origin serializes them (§15)": async () => {
+  "origins are compared as new URL().origin serializes them": async () => {
     // The page derives the origin with new URL(referrer).origin, so these spellings all arrive as
     // "https://a.com" and therefore map to the same ID; sent verbatim, the API rejects them.
     for (const spelling of ["https://a.com:443", "https://A.com", "https://a.com/path?q"]) {

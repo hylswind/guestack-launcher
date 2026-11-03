@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy the shared lib files from functions-project/lib/ into page-project/ (DECISIONS.md D-06).
+# Copy the shared lib files from functions-project/lib/ into page-project/.
 # The copies are committed; scripts/lint.sh fails if they drift from the source.
 set -euo pipefail
 cd "$(dirname "$0")/.."

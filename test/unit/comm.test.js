@@ -109,7 +109,7 @@ export default {
     for (const b of bad) await rejects(() => open(server, b), code("bad_envelope"), JSON.stringify(b));
     await rejects(() => open(otherServer, body), code("bad_envelope"), "wrong server key");
   },
-  "server rejects invalid ephemeral points (§5.3)": async () => {
+  "server rejects invalid ephemeral points": async () => {
     const server = await importCommPrivateKey(COMM_KEY);
     const { body } = await seal(pub(COMM_KEY), { a: 1 });
     const epk = b64urlDecode(body.epk);

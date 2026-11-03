@@ -1,4 +1,4 @@
-// SHA-256 and HMAC-SHA256 over WebCrypto (DESIGN.md §4).
+// SHA-256 and HMAC-SHA256 over WebCrypto.
 
 import { assertBytes } from "./bytes.js";
 

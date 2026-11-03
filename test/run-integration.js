@@ -1,11 +1,11 @@
-// Integration tier (DESIGN.md §15; `npm run test:integration`).
+// Integration tier (`npm run test:integration`).
 //
 // 1. Start the mock providers.
 // 2. Copy functions-project/ to test/.out/api-a and generate DEV configs there with
 //    launcher/dev-config.mjs (never touching the developer's own configs or .dev.vars).
 // 3. Start two `npx wrangler pages dev` instances with the secrets passed as --binding:
 //    A with the right secrets; B identical except K_TOKEN, so its integrity gate fails.
-// 4. Wait until A passes the launcher smoke test (§10 step 12: garbage → 400 bad_envelope)
+// 4. Wait until A passes the launcher's smoke test (garbage → 400 bad_envelope)
 //    and B answers 503, then run test/integration/*.test.js under node:test.
 import { spawn, spawnSync } from "node:child_process";
 import { cpSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -73,7 +73,7 @@ try {
     child.on("exit", (c) => resolve(c ?? 1));
   });
 
-  // §8.1: the gate runs once per isolate and its failure is cached at module level. B has now
+  // The integrity gate runs once per isolate and its failure is cached at module level. B has now
   // answered several 503s (smoke probes + middleware tests) but must have computed — and
   // logged — the failure exactly once.
   const failures = (B.output().match(/integrity_failed/g) || []).length;

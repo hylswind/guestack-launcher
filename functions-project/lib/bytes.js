@@ -1,4 +1,4 @@
-// Byte helpers shared by every module. Web APIs only (DESIGN.md §8).
+// Byte helpers shared by every module. Web APIs only.
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -48,8 +48,9 @@ export function hexEncode(bytes) {
 }
 
 /**
- * Constant-time equality (§4; DECISIONS.md D-14). Length is not secret (MAC and hash lengths
- * are public constants), so a length mismatch returns early; otherwise every byte is visited.
+ * Constant-time equality for every MAC and hash comparison. Length is not secret (MAC and
+ * hash lengths are public constants), so a length mismatch returns early; otherwise every
+ * byte is visited.
  */
 export function timingSafeEqual(a, b) {
   assertBytes(a, "timingSafeEqual");

@@ -1,4 +1,4 @@
-// Strict input validation shared by the API and the page (DESIGN.md §5.2, §6.1, §14).
+// Strict input validation shared by the API and the page.
 
 export const SESSION_RE = /^[A-Za-z0-9._~-]{1,256}$/;
 export const RETURN_RE = /^\/(?!\/)[^\s]*$/;
@@ -26,12 +26,12 @@ export function validateOrigin(input, { dev = false } = {}) {
   return null;
 }
 
-/** RP-supplied session string (§5.2). Returns it or null. */
+/** RP-supplied session string. Returns it or null. */
 export function validateSession(s) {
   return typeof s === "string" && SESSION_RE.test(s) ? s : null;
 }
 
-/** Return path on the RP origin (§6.1 step 7, §14). Returns it or null. */
+/** Return path on the RP origin: starts with "/" but not "//". Returns it or null. */
 export function validateReturnPath(p) {
   return typeof p === "string" && RETURN_RE.test(p) ? p : null;
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Dev-only (DESIGN.md §14; DECISIONS.md D-23): generate local keys and DEV=true configs.
-// Never used by the launcher. M5's gen-config.sh writes the same config.js shapes at launch.
+// Dev-only: generate local keys and DEV=true configs.
+// Never used by the launcher, which writes the same config.js shapes at launch.
 //
 //   node launcher/dev-config.mjs [--functions DIR] [--page DIR] [--page-origin URL]
 //                                [--api-base URL] [--provider-base URL] [--dev-vars] [--json]
@@ -41,7 +41,7 @@ async function p256() {
 const jwtKey = await p256();
 const commKey = await p256();
 
-// Exact strings stored as env values; the hashes are computed over these bytes (§10 step 3).
+// Exact strings stored as env values; the hashes are computed over these bytes, as the launcher does.
 const secrets = {
   K_UNIVERSAL: random32(),
   K_PER_RP: random32(),

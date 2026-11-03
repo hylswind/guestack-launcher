@@ -1,12 +1,12 @@
-// ES256 JWT issued to the RP (DESIGN.md §4, §5.2).
-// Signing only; the independent RP-side verifier lives in test/rp/verify-jwt.js (DECISIONS.md D-08).
+// ES256 JWT issued to the RP.
+// Signing only; the independent RP-side verifier lives in test/rp/verify-jwt.js.
 
 import { b64urlEncode } from "./b64.js";
 import { assertBytes, randomBytes, utf8Encode } from "./bytes.js";
 import { sha256 } from "./hmac.js";
 import { validateSession } from "./validate.js";
 
-export const JWT_TTL_S = 300; // [const]
+export const JWT_TTL_S = 300; // fixed, not configurable
 
 const ECDSA_P256 = { name: "ECDSA", namedCurve: "P-256" };
 
@@ -19,7 +19,7 @@ function assertEcP256(jwk, where) {
 
 /**
  * RFC 7638 thumbprint over the required members only, in lexicographic order
- * ({"crv","kty","x","y"}); any `kid` member is ignored (DECISIONS.md D-13).
+ * ({"crv","kty","x","y"}); any `kid` member is ignored.
  */
 export async function jwkThumbprint(jwk) {
   assertEcP256(jwk, "jwkThumbprint");
@@ -34,7 +34,7 @@ export function importJwtSigningKey(privateJwk) {
   return crypto.subtle.importKey("jwk", { kty, crv, x, y, d }, ECDSA_P256, false, ["sign"]);
 }
 
-/** Claims exactly as §5.2 lists them; `sub` is the 32-byte per_rp_id. */
+/** The JWT claims, exactly these and no others; `sub` is the 32-byte per_rp_id. */
 export function buildClaims({ iss, sub, aud, nowS, session }) {
   if (typeof iss !== "string" || iss.length === 0) throw new TypeError("buildClaims: iss expected");
   if (typeof aud !== "string" || aud.length === 0) throw new TypeError("buildClaims: aud expected");

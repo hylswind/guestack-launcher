@@ -1,4 +1,4 @@
-// POST /v1/issue (DESIGN.md §6.1 step 6, §8): token + RP origin + session → per-RP JWT.
+// POST /v1/issue: token + RP origin + session → per-RP JWT.
 // The middleware has already checked integrity and decrypted the envelope.
 
 import { DEV, JWT_PUBLIC_JWK, PAGE_ORIGIN } from "../../_generated/config.js";
@@ -21,7 +21,7 @@ export async function onRequestPost({ data }) {
   if (session === null) return reply({ error: "bad_session" }, 400);
 
   const sub = await perRpId(keys.kPerRp, token.uid, origin);
-  // iss is the page's deployment URL (§5.2): known before this config was baked.
+  // iss is the page's deployment URL: known before this config was baked, unlike the API's.
   const claims = buildClaims({ iss: PAGE_ORIGIN, sub, aud: origin, nowS, session });
   return reply({ jwt: await signJwt(keys.jwt, JWT_PUBLIC_JWK.kid, claims) });
 }

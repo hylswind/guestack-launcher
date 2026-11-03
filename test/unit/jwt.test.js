@@ -30,7 +30,7 @@ export default {
     eq(await jwkThumbprint(JWT_KEY), JWT_KEY_THUMBPRINT);
     eq(await jwkThumbprint({ ...pub(JWT_KEY), kid: "anything" }), JWT_KEY_THUMBPRINT);
   },
-  "header, claims and signature layout match §5.2": async () => {
+  "header, claims and signature layout match the protocol": async () => {
     const jwt = await issue();
     const [h, c, s] = jwt.split(".");
     eq(td.decode(b64urlDecode(h)), `{"alg":"ES256","typ":"JWT","kid":"${JWT_KEY_THUMBPRINT}"}`);
@@ -43,7 +43,7 @@ export default {
     eq(claims.jti.length, 22);
     eq(b64urlDecode(s).length, 64);
   },
-  "independent RP verifier (§13) accepts the JWT": async () => {
+  "independent RP verifier accepts the JWT": async () => {
     const claims = await verifyGuestackJwt(await issue(), opts);
     eq(claims.sub, b64urlEncode(SUB));
     eq(claims.session, "sess-1");

@@ -1,4 +1,4 @@
-// Google OAuth 2.0 + People API phone acquisition (DESIGN.md §6.2 step 8′, §7).
+// Google OAuth 2.0 + People API phone acquisition.
 //
 // 1. Exchange the authorization code (with client secret and PKCE verifier) for an access token.
 // 2. GET people/me?personFields=phoneNumbers with that token.
@@ -12,7 +12,7 @@ import { ProviderError } from "./errors.js";
 
 const TOKEN_BASE = "https://oauth2.googleapis.com";
 const PEOPLE_BASE = "https://people.googleapis.com";
-const TIMEOUT_MS = 10_000; // DECISIONS.md D-25
+const TIMEOUT_MS = 10_000; // per provider request
 
 /**
  * Returns the verified phone as "+<digits>" or throws ProviderError.

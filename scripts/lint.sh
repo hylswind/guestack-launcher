@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Lint gates for product code (DESIGN.md §8.5, §14, §15; DECISIONS.md D-05, D-06).
+# Lint gates for product code.
 # Product directories ship with zero runtime dependencies and run on Web-standard APIs only.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 PRODUCT_DIRS=(functions-project page-project)
-LOG_EXCEPTION="functions-project/lib/log.js"   # fixed-enum logger, the only console.* allowed (§8.5)
+LOG_EXCEPTION="functions-project/lib/log.js"   # fixed-enum logger, the only console.* allowed
 status=0
 fail() { printf 'lint: %s\n' "$*" >&2; status=1; }
 
@@ -17,7 +17,7 @@ for f in "${files[@]}"; do
     fail "$f: console.* is forbidden"
   fi
 
-  # 2. CommonJS and Node-only APIs are forbidden; base64 must be hand-written over Uint8Array (§8).
+  # 2. CommonJS and Node-only APIs are forbidden; base64 must be hand-written over Uint8Array.
   if grep -nE '\brequire[[:space:]]*\(' "$f" >&2; then
     fail "$f: require() is forbidden"
   fi
@@ -37,7 +37,7 @@ for f in "${files[@]}"; do
            | sed -E "s/.*['\"]([^'\"]+)['\"]$/\1/" || true)
 done
 
-# 4. Shared files are byte-identical copies of their canonical source (no build step, §9).
+# 4. Shared files are byte-identical copies of their canonical source (the page has no build step).
 while IFS= read -r name; do
   [[ -z "$name" || "$name" == \#* ]] && continue
   src="functions-project/lib/$name"; dst="page-project/$name"
@@ -46,7 +46,7 @@ while IFS= read -r name; do
   cmp -s "$src" "$dst" || fail "$dst differs from $src (run: npm run sync)"
 done < scripts/shared-files.txt
 
-# 5. Generated configs are never committed; their .example templates always exist (§14).
+# 5. Generated configs are never committed; their .example templates always exist.
 for c in functions-project/_generated/config.js page-project/config.js; do
   [[ -f "$c.example" ]] || fail "$c.example is missing"
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1 \

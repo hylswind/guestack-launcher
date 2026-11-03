@@ -1,6 +1,6 @@
-// Dev-only mock of the identity providers (DESIGN.md §15 integration tier).
-// The API reaches it through PROVIDER_BASE_OVERRIDE; routes live under /google/ (Telegram joins
-// in M2b, the /auth pages in M3). The authorization `code` selects the scenario, so one mock
+// Dev-only mock of the identity providers for the integration tier.
+// The API reaches it through PROVIDER_BASE_OVERRIDE; routes live under /google/ (Telegram and
+// the authorization pages come later). The authorization `code` selects the scenario, so one mock
 // instance serves every test. Every request the API sends is checked; a malformed one gets a
 // 400, which the API turns into provider_error and the happy-path tests catch.
 import { createServer } from "node:http";

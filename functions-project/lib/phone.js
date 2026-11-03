@@ -1,4 +1,5 @@
-// E.164 normalization (DESIGN.md §7, [const]; DECISIONS.md D-16).
+// E.164 normalization. The rule is fixed: its output feeds the universal ID, so any change
+// changes IDs.
 //
 // Remove "+", spaces, hyphens, dots and parentheses (ASCII only). Every remaining character must
 // be an ASCII digit; non-ASCII digits and any other character reject. Require 8–15 digits and a

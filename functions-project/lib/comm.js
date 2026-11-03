@@ -1,5 +1,5 @@
-// Page↔API encrypted envelope (DESIGN.md §5.3). One isomorphic file: the client half runs in the
-// page (byte-identical copy in page-project/, DECISIONS.md D-06), the server half in the functions.
+// Page↔API encrypted envelope. One isomorphic file: the client half runs in the
+// page (byte-identical copy in page-project/), the server half in the functions.
 //
 //   ss    = ECDH(P-256, client_ephemeral_priv, COMM_PUBLIC)            // 32 bytes
 //   okm   = HKDF-SHA256(ikm=ss, salt=SHA256(epk), info="guestack/comm/v1", L=64)
@@ -7,7 +7,7 @@
 //   request  ct = AES-GCM(k_req, iv, aad="req", json)   body {v:1, epk, iv, ct}
 //   response ct = AES-GCM(k_res, iv, aad="res", json)   body {v:1, iv, ct}
 //
-// The 16-byte nonce is owned here (DECISIONS.md D-11): seal() adds it to the request plaintext,
+// The 16-byte nonce is owned here: seal() adds it to the request plaintext,
 // reply() echoes it, and the client's open() rejects a response that does not echo it.
 
 import { b64urlDecode, b64urlEncode } from "./b64.js";
@@ -162,7 +162,7 @@ export function importCommPrivateKey(privateJwk) {
 /**
  * Opens a request body. Returns `{ plaintext, reply }`, where `await reply(obj)` produces the
  * encrypted response body with the request nonce echoed. Any malformed, invalid-point or
- * undecryptable request throws CommError("bad_envelope") (DECISIONS.md D-10).
+ * undecryptable request throws CommError("bad_envelope").
  */
 export async function open(commPrivateKey, body) {
   if (!isPlainObject(body) || body.v !== COMM_VERSION || typeof body.epk !== "string"

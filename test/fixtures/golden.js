@@ -1,6 +1,6 @@
 // Golden values computed once with node:crypto only (createHmac, hkdfSync, diffieHellman,
 // createCipheriv), i.e. independently of functions-project/lib and of WebCrypto. They pin the
-// [const] derivations and detect drift between the three test runtimes. Keys: fixtures/keys.js.
+// fixed derivations and detect drift between the three test runtimes. Keys: fixtures/keys.js.
 
 // RFC 7638 thumbprint of JWT_KEY.
 export const JWT_KEY_THUMBPRINT = "S8CMdaLiK_AbbJYw9mT_jdomNClJqdxGrx6LKSIboNo";

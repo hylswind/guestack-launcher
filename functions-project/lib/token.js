@@ -1,4 +1,4 @@
-// Long-lived login token (DESIGN.md §5.1).
+// Long-lived login token, held by the page.
 //
 //   token        := b64url(payload_json) "." b64url(HMAC-SHA256(K_TOKEN, payload_json_bytes))
 //   payload_json := {"v":1,"uid":"<b64url universal_id>","iat":<unix s>,"exp":<unix s>}
@@ -9,7 +9,7 @@ import { b64urlDecode, b64urlEncode } from "./b64.js";
 import { assertBytes, timingSafeEqual, utf8Decode, utf8Encode } from "./bytes.js";
 import { hmacSha256 } from "./hmac.js";
 
-export const TOKEN_TTL_S = 90 * 24 * 3600; // [const] 90 days
+export const TOKEN_TTL_S = 90 * 24 * 3600; // 90 days, fixed, not configurable
 export const TOKEN_IAT_SKEW_S = 60; // reject iat > now + 60
 const MAX_TOKEN_LENGTH = 1024;
 
@@ -26,8 +26,8 @@ export async function mintToken(kToken, uid, nowS) {
 }
 
 /**
- * Returns `{ uid }` (32 bytes) or null. Never throws, never says which check failed
- * (DECISIONS.md D-17): MAC first, then v === 1, exp > now, iat <= now + 60, uid is 32 bytes.
+ * Returns `{ uid }` (32 bytes) or null. Never throws and never says which check failed, so
+ * callers cannot leak it. Order: MAC, then v === 1, exp > now, iat <= now + 60, 32-byte uid.
  */
 export async function verifyToken(kToken, token, nowS) {
   try {
@@ -53,7 +53,7 @@ export async function verifyToken(kToken, token, nowS) {
 }
 
 /**
- * Page-side pre-check (§5.1): the token's `exp` in unix seconds, or null if unparsable.
+ * Page-side pre-check: the token's `exp` in unix seconds, or null if unparsable.
  * No MAC check; the result must never be trusted for security decisions.
  */
 export function peekTokenExp(token) {

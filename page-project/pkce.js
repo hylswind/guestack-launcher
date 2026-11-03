@@ -1,4 +1,4 @@
-// PKCE S256 (RFC 7636) and OAuth `state` (DESIGN.md §4, §6.2 step 6′).
+// PKCE S256 (RFC 7636) and OAuth `state`.
 // Generation runs in the page; the backend uses only VERIFIER_RE to validate what it is sent.
 
 import { b64urlEncode } from "./b64.js";

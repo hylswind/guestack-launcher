@@ -1,5 +1,5 @@
-# Lint + unit tests in all three runtimes (DESIGN.md §15). This workflow never holds secrets;
-# the attested launcher is a separate workflow (launcher.yml, milestone M5).
+# Lint, unit tests in all three runtimes, and the integration tier. This workflow never holds
+# secrets; the attested launcher is a separate workflow.
 name: test
 
 on:

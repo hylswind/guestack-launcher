@@ -1,4 +1,4 @@
-// POST /v1/login (DESIGN.md §6.2 step 8′, §8): authorization code → verified phone → token.
+// POST /v1/login: authorization code → verified phone → token.
 // The middleware has already checked integrity and decrypted the envelope.
 
 import { GOOGLE_CLIENT_ID, PAGE_ORIGIN, PROVIDER_BASE_OVERRIDE } from "../../_generated/config.js";
@@ -20,8 +20,7 @@ export async function onRequestPost({ data, env }) {
   const valid = name !== null
     && typeof p.code === "string" && p.code.length > 0 && p.code.length <= MAX_CODE_LENGTH
     && typeof p.code_verifier === "string" && VERIFIER_RE.test(p.code_verifier)
-    // The page sends its own URL; the provider only accepts the URI the flow started with
-    // (DECISIONS.md D-21).
+    // The page sends its own URL, which is also the redirect URI registered with the provider.
     && p.redirect_uri === PAGE_ORIGIN;
   if (!valid) return reply({ error: "bad_request" }, 400);
 

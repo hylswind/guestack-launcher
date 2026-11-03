@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local development setup (DESIGN.md §14): fresh dev keys, DEV=true configs, and .dev.vars.
+# Local development setup: fresh dev keys, DEV=true configs, and .dev.vars.
 # Re-running rotates every key, so tokens from a previous run stop verifying.
 # Extra arguments are passed to launcher/dev-config.mjs (e.g. --provider-base http://127.0.0.1:9000).
 set -euo pipefail

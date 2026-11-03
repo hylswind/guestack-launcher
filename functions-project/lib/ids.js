@@ -1,4 +1,5 @@
-// Universal and per-RP pseudonymous IDs (DESIGN.md §4, [const]; DECISIONS.md D-12).
+// Universal and per-RP pseudonymous IDs. These derivations are fixed: changing any input byte
+// or the layout changes every ID.
 //
 //   universal_id = HMAC-SHA256(K_UNIVERSAL, phone_e164)
 //   per_rp_id    = HMAC-SHA256(K_PER_RP, universal_id ‖ 0x00 ‖ origin_utf8)

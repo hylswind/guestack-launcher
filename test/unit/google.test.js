@@ -41,7 +41,7 @@ export default {
     ])));
     eq(await getVerifiedPhone({ ...ARGS, fetchImpl: f }), "+14155552671");
   },
-  "sends the §7 token request and a bearer People request": async () => {
+  "sends the authorization-code token request and a bearer People request": async () => {
     const f = stub(routes(people([{ canonicalForm: "+14155552671", metadata: { verified: true } }])));
     await getVerifiedPhone({ ...ARGS, fetchImpl: f });
     eq(f.calls.length, 2);

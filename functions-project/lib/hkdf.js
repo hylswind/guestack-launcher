@@ -1,4 +1,4 @@
-// HKDF-SHA256 (RFC 5869) over WebCrypto (DESIGN.md §5.3).
+// HKDF-SHA256 (RFC 5869) over WebCrypto.
 
 import { assertBytes } from "./bytes.js";
 

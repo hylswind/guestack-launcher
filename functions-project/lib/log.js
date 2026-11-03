@@ -1,4 +1,4 @@
-// The only console.* in product code (DESIGN.md §8.5; DECISIONS.md D-22).
+// The only console.* in product code; scripts/lint.sh forbids it everywhere else.
 // It accepts a fixed set of codes and nothing else, so no request data can ever reach the logs.
 
 const CODES = new Set([

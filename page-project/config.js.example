@@ -1,11 +1,11 @@
-// [generated] Template for page-project/config.js (DESIGN.md §3, §14).
-// The real file is written by launcher/gen-config.sh at launch, or by launcher/dev-launch.sh
+// [generated] Template for page-project/config.js.
+// The real file is written by the launcher at launch, or by launcher/dev-launch.sh
 // for local development. It is git-ignored and must never be committed.
 
-// true only in dev-launch.sh builds: allows http://localhost[:port] referrers (§6.1 step 4).
+// true only in dev-launch.sh builds: allows http://localhost[:port] referrers.
 export const DEV = false;
 
-// Base URL of the backend API (operator's custom host, §8).
+// Base URL of the backend API (the operator's custom host).
 export const API_BASE_URL = "https://api.example";
 
 export const COMM_PUBLIC_JWK = { kty: "EC", crv: "P-256", x: "", y: "" };

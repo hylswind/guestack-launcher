@@ -1,6 +1,6 @@
-// Runs for every request (DESIGN.md §8): integrity gate, routing, CORS, security headers,
+// Runs for every request: integrity gate, routing, CORS, security headers,
 // encrypted envelope, error shaping. Responses produced before an envelope exists are plain
-// JSON (DECISIONS.md D-19); everything after it is encrypted.
+// JSON, because there is no key to encrypt them with; everything after it is encrypted.
 
 import {
   COMM_PUBLIC_JWK, JWT_PUBLIC_JWK, PAGE_ORIGIN, SECRET_HASHES,
@@ -20,7 +20,7 @@ const ROUTES = new Set(["/v1/login", "/v1/issue"]);
 const MAX_BODY_BYTES = 16 * 1024;
 const HEX64 = /^[0-9a-f]{64}$/;
 
-// ---------------------------------------------------------------- integrity gate (§8.1)
+// ---------------------------------------------------------------- integrity gate
 
 // One promise per isolate. Every request awaits the same promise, so the hashes are computed
 // exactly once, and a failed isolate keeps answering 503 from this cached result.
@@ -117,13 +117,13 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   if (!url.pathname.startsWith("/v1/")) return context.next(); // static placeholder
 
-  // 1. Integrity gate.
+  // Integrity gate.
   const integrity = await integrityGate(env);
   const origin = request.headers.get("Origin");
   const cors = origin === PAGE_ORIGIN;
   if (!integrity.ok) return plain(503, { error: "integrity" }, cors);
 
-  // 2. CORS: an Origin header other than the page's is refused outright.
+  // CORS: an Origin header other than the page's is refused outright.
   if (origin !== null && !cors) return plain(403, { error: "forbidden" }, false);
 
   // Routing.
@@ -135,7 +135,7 @@ export async function onRequest(context) {
     return res;
   }
 
-  // 4. Envelope.
+  // Envelope.
   const badEnvelope = () => plain(400, { error: "bad_envelope" }, cors);
   if (!/^application\/json\s*(;|$)/i.test(request.headers.get("Content-Type") || "")) return badEnvelope();
   let envelope;
@@ -152,7 +152,7 @@ export async function onRequest(context) {
   context.data.reply = async (obj, status = 200) =>
     new Response(JSON.stringify(await envelope.reply(obj)), { status, headers: headers(cors) });
 
-  // 5. Error shaping: nothing about the failure leaves the isolate.
+  // Error shaping: nothing about the failure leaves the isolate.
   try {
     return await context.next();
   } catch {

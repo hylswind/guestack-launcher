@@ -19,7 +19,7 @@ async function forge(payloadText, key = K) {
 const flip = (s, i) => s.slice(0, i) + (s[i] === "A" ? "B" : "A") + s.slice(i + 1);
 
 export default {
-  "mint → verify round trip; payload layout matches §5.1": async () => {
+  "mint → verify round trip; payload layout is exactly {v, uid, iat, exp}": async () => {
     const t = await mintToken(K, UID, NOW);
     const r = await verifyToken(K, t, NOW);
     ok(r);

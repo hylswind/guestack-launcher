@@ -1,5 +1,5 @@
-// base64url without padding (RFC 4648 §5), hand-written over Uint8Array (DESIGN.md §4, §8).
-// Decoding is strict (DECISIONS.md D-09): no padding, no characters outside the URL-safe
+// base64url without padding (RFC 4648 §5), hand-written over Uint8Array (no atob/btoa).
+// Decoding is strict: no padding, no characters outside the URL-safe
 // alphabet, no length ≡ 1 (mod 4), and the unused trailing bits must be zero.
 
 import { assertBytes } from "./bytes.js";

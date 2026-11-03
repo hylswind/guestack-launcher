@@ -27,7 +27,7 @@ test("google: a different phone gives a different uid", async () => {
   assert.notEqual(hex(a.uid), hex(b.uid));
 });
 
-test("google: provider outcomes map to the §8 error codes", async () => {
+test("google: provider outcomes map to the API error codes", async () => {
   for (const [code, error, status] of [
     ["google:unverified", "phone_unavailable", 403],
     ["google:no-canonical", "phone_unavailable", 403],
@@ -46,7 +46,7 @@ test("google: provider outcomes map to the §8 error codes", async () => {
 
 test("bad_request for unsupported providers and malformed fields", async () => {
   for (const [why, overrides] of [
-    ["telegram (M2b)", { provider: "telegram" }],
+    ["telegram (not implemented yet)", { provider: "telegram" }],
     ["unknown provider", { provider: "github" }],
     ["prototype key", { provider: "__proto__" }],
     ["missing provider", { provider: undefined }],

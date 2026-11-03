@@ -1,7 +1,7 @@
 import { normalizePhone } from "../../functions-project/lib/phone.js";
 import { eq } from "../lib/assert.js";
 
-// DESIGN.md §7 [const]; DECISIONS.md D-16.
+// The normalization rule is fixed: its output feeds the universal ID.
 const ACCEPT = [
   ["+14155552671", "+14155552671", "Google canonicalForm"],
   ["14155552671", "+14155552671", "Telegram digits without +"],
