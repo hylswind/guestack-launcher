@@ -2,9 +2,11 @@
 # secrets; the attested launcher is a separate workflow.
 name: test
 
+# Runs on pushes to this repository only. There is deliberately no pull_request trigger; if
+# outside contributions are accepted later, add it back together with fork-PR approval for all
+# external contributors.
 on:
   push:
-  pull_request:
 
 permissions:
   contents: read
