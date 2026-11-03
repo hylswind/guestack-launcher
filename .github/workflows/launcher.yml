@@ -36,8 +36,6 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           TELEGRAM_CLIENT_ID: ${{ secrets.TELEGRAM_CLIENT_ID }}
           TELEGRAM_CLIENT_SECRET: ${{ secrets.TELEGRAM_CLIENT_SECRET }}
-          FUNCTIONS_PROJECT_NAME: ${{ secrets.FUNCTIONS_PROJECT_NAME }}
-          PAGE_PROJECT_NAME: ${{ secrets.PAGE_PROJECT_NAME }}
           OPERATOR_EMAIL: ${{ secrets.OPERATOR_EMAIL }}
           API_CUSTOM_HOST: ${{ secrets.API_CUSTOM_HOST }}
           WRANGLER_SEND_METRICS: "false"

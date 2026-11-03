@@ -7,7 +7,7 @@ This is the operator's guide: what to set up, how to launch, what to check after
 `.github/workflows/launcher.yml` runs `launcher/launch.sh` and then attests and publishes the launch record. In order:
 
 1. Generates fresh instance keys (three HMAC keys and two P-256 keys) in memory. Nothing is printed; every generated value is masked in the log.
-2. Creates two Cloudflare Pages projects: the API (functions) and the static login page. Both must be new or empty.
+2. Creates two Cloudflare Pages projects with fixed names: `guestack-api` (the functions) and `guestack-page` (the static login page). Both must be new or empty.
 3. Stores the seven secrets on the API project.
 4. Creates one notification policy that records every deployment event of the two projects in the account's notification history, which cannot be edited or deleted.
 5. Deploys the API. If a custom host is configured, attaches it.
@@ -31,7 +31,7 @@ gh attestation verify launch.json --repo <owner>/guestack-launcher \
 - An API token with **Pages: Edit** and **Account Notifications (Alerting): Edit** on that account, and nothing else. The launcher never touches R2 or DNS.
 - **No enabled notification policies** on the account. The launcher refuses to run otherwise, and aborts if one appears while it runs.
 - An e-mail address Cloudflare accepts as a notification destination for the account (an account member's address works). Deployment notifications go there.
-- Two unused Pages project names, one for the API and one for the page.
+- No Pages projects named `guestack-api` or `guestack-page` on the account, or only empty ones. The names are fixed in `launcher/launch.sh`.
 - Optional: a custom host for the API (for example `api.example.com`) on a zone in the same account, so the domain can be attached and its DNS record created. Without one, the page calls the API's deployment URL directly.
 
 **Google**
@@ -54,8 +54,6 @@ The repository must be public: the attestation is signed through the public Sigs
 | `CF_ACCOUNT_ID` | the Cloudflare account id |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | the Google OAuth client |
 | `TELEGRAM_CLIENT_ID`, `TELEGRAM_CLIENT_SECRET` | the Telegram OpenID Connect client |
-| `FUNCTIONS_PROJECT_NAME` | Pages project name for the API |
-| `PAGE_PROJECT_NAME` | Pages project name for the page |
 | `OPERATOR_EMAIL` | the notification e-mail address |
 | `API_CUSTOM_HOST` | optional: host name only, for example `api.example.com` |
 
@@ -90,7 +88,7 @@ Some behaviour can only be observed on a real account. After the first launch, r
 
 ## Re-launching
 
-A re-launch creates a new instance: every key changes, so every pseudonymous ID changes too. To re-launch, delete in the Cloudflare dashboard both Pages projects and the `guestack-launch-<run id>` notification policy (or disable it), then run the workflow again. History entries of the old policy stay in the account and are ignored.
+A re-launch creates a new instance: every key changes, so every pseudonymous ID changes too. To re-launch, delete in the Cloudflare dashboard both Pages projects (`guestack-api` and `guestack-page`) and the `guestack-launch-<run id>` notification policy (or disable it), then run the workflow again. History entries of the old policy stay in the account and are ignored.
 
 ## What the operator can and cannot do
 

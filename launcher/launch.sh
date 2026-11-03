@@ -11,8 +11,8 @@
 # carries step names, project names, deployment ids, URLs and the policy id, nothing else.
 #
 # Required environment: CF_API_TOKEN, CF_ACCOUNT_ID, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
-# TELEGRAM_CLIENT_ID, TELEGRAM_CLIENT_SECRET, FUNCTIONS_PROJECT_NAME, PAGE_PROJECT_NAME,
-# OPERATOR_EMAIL, GITHUB_RUN_ID, GITHUB_SHA. Optional: API_CUSTOM_HOST.
+# TELEGRAM_CLIENT_ID, TELEGRAM_CLIENT_SECRET, OPERATOR_EMAIL, GITHUB_RUN_ID, GITHUB_SHA.
+# Optional: API_CUSTOM_HOST.
 # Test knobs (production defaults): CF_API_BASE, WRANGLER, HISTORY_TIMEOUT_S, HISTORY_POLL_S,
 # SMOKE_TIMEOUT_S, CUSTOM_HOST_TIMEOUT_S, CUSTOM_HOST_PROBE_BASE, RETRY_SLEEP_S.
 set -euo pipefail
@@ -29,11 +29,13 @@ API_CUSTOM_HOST="${API_CUSTOM_HOST:-}"
 CUSTOM_HOST_PROBE_BASE="${CUSTOM_HOST_PROBE_BASE:-https://${API_CUSTOM_HOST}}"
 
 for v in CF_API_TOKEN CF_ACCOUNT_ID GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TELEGRAM_CLIENT_ID \
-         TELEGRAM_CLIENT_SECRET FUNCTIONS_PROJECT_NAME PAGE_PROJECT_NAME OPERATOR_EMAIL GITHUB_RUN_ID GITHUB_SHA; do
+         TELEGRAM_CLIENT_SECRET OPERATOR_EMAIL GITHUB_RUN_ID GITHUB_SHA; do
   [[ -n "${!v:-}" ]] || { echo "launch: $v is not set" >&2; exit 1; }
 done
-A="$FUNCTIONS_PROJECT_NAME"
-B="$PAGE_PROJECT_NAME"
+# The two Pages project names are constants, not inputs: names are unique per account, a
+# re-launch deletes the old projects first, and a constant in attested code is easier to audit.
+readonly A="guestack-api"   # functions (backend API)
+readonly B="guestack-page"  # static login page
 ACC="$CF_ACCOUNT_ID"
 
 WORK="$(mktemp -d)"

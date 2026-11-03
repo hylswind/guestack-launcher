@@ -14,8 +14,8 @@ import { startMockCloudflare } from "./mock-cloudflare.js";
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const OUT = join(ROOT, "test", ".out", "launcher");
 const SHIM = join(ROOT, "test", "launcher", "bin", "wrangler");
-const A = "gs-api";
-const B = "gs-page";
+const A = "guestack-api"; // fixed in launch.sh
+const B = "guestack-page";
 const ACCOUNT = "acc0123456789";
 const TOKEN = "cf-test-token";
 const CLIENT_SECRETS = { GOOGLE_CLIENT_SECRET: "g-secret-7f3a9c", TELEGRAM_CLIENT_SECRET: "t-secret-1b2c3d" };
@@ -52,8 +52,6 @@ async function launch({ env = {}, scenario = null, unset = [] } = {}) {
     GOOGLE_CLIENT_ID: "g-client-id",
     TELEGRAM_CLIENT_ID: "123456789",
     ...CLIENT_SECRETS,
-    FUNCTIONS_PROJECT_NAME: A,
-    PAGE_PROJECT_NAME: B,
     OPERATOR_EMAIL: "ops@example.test",
     GITHUB_RUN_ID: "424242",
     GITHUB_SHA: "a".repeat(40),
@@ -166,6 +164,15 @@ test("happy path: functions first, then the page with the functions URL baked in
   for (const v of Object.values(CLIENT_SECRETS)) assert.ok(!out.includes(v), "client secret printed");
 });
 
+test("project names are fixed in launch.sh; old name variables are ignored", async () => {
+  const { code, out, state, repo } = await launch({ env: { FUNCTIONS_PROJECT_NAME: "other-api", PAGE_PROJECT_NAME: "other-page" } });
+  assert.equal(code, 0, out);
+  assert.deepEqual(Object.keys(state.projects).sort(), ["guestack-api", "guestack-page"]);
+  const record = JSON.parse(readFileSync(join(repo, "launch.json"), "utf8"));
+  assert.equal(record.cloudflare.functions_project.name, "guestack-api");
+  assert.equal(record.cloudflare.page_project.name, "guestack-page");
+});
+
 test("custom host: attached, baked into the page and its CSP, and probed", async () => {
   const { code, out, state } = await launch({
     env: { API_CUSTOM_HOST: "api.example.test", CUSTOM_HOST_PROBE_BASE: "__MOCK__/custom" },
@@ -209,13 +216,13 @@ test("transient 5xx from the API is retried", async () => {
 });
 
 const aborts = [
-  ["a project that already has a deployment", { scenario: { priorDeployment: B } }, /project gs-page already has 1 deployment/],
+  ["a project that already has a deployment", { scenario: { priorDeployment: B } }, /project guestack-page already has 1 deployment/],
   ["an enabled policy already on the account", { scenario: { extraPolicy: true } }, /already has an enabled notification policy/],
   ["another policy enabled during the launch", { scenario: { extraPolicyLater: true } }, /another notification policy is enabled/],
   ["an unexpected deployment in the history", { scenario: { foreignDeployment: true } }, /unexpected deployment/],
   ["a deployment notification that never arrives", { scenario: { historyMissing: B } }, /did not appear within 4s/],
   ["functions failing the smoke test", { scenario: { brokenSmoke: true } }, /does not answer bad_envelope .*production secrets/],
-  ["a failing wrangler deploy", { env: { MOCK_WRANGLER_FAIL: `deploy:${A}` } }, /wrangler deploy of gs-api failed/],
+  ["a failing wrangler deploy", { env: { MOCK_WRANGLER_FAIL: `deploy:${A}` } }, /wrangler deploy of guestack-api failed/],
   ["a missing required variable", { unset: ["OPERATOR_EMAIL"] }, /OPERATOR_EMAIL is not set/],
   ["a wrong API token", { env: { CF_API_TOKEN: "wrong" } }, /HTTP 403/],
 ];
