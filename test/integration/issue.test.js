@@ -5,7 +5,7 @@ import { perRpId, universalId } from "../../functions-project/lib/ids.js";
 import { mintToken, TOKEN_TTL_S } from "../../functions-project/lib/token.js";
 import { verifyGuestackJwt } from "../rp/verify-jwt.js";
 import { GOOGLE_PHONES } from "../mock-providers.js";
-import { config, freshToken, issue, PAGE_ORIGIN, rawKey } from "./env.js";
+import { config, freshToken, issue, login, PAGE_ORIGIN, rawKey } from "./env.js";
 
 const now = () => Math.floor(Date.now() / 1000);
 let token;
@@ -88,4 +88,19 @@ test("bad_session for sessions outside ^[A-Za-z0-9._~-]{1,256}$", async () => {
     assert.equal(res.status, 400, String(session));
     assert.equal(res.body.error, "bad_session", String(session));
   }
+});
+
+test("Google and Telegram logins for the same number get the same sub", async () => {
+  const google = await freshToken("google:ok");
+  const tg = await login({ provider: "telegram", code: "telegram:ok" });
+  assert.equal(tg.status, 200);
+  const subs = [];
+  for (const t of [google, tg.body.token]) {
+    const res = await issue({ token: t, origin: "https://cross.example" });
+    assert.equal(res.status, 200);
+    subs.push((await verifyGuestackJwt(res.body.jwt, {
+      publicJwk: config.JWT_PUBLIC_JWK, iss: PAGE_ORIGIN, aud: "https://cross.example",
+    })).sub);
+  }
+  assert.equal(subs[0], subs[1]);
 });

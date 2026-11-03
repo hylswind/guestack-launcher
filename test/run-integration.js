@@ -19,6 +19,8 @@ const out = join(root, "test", ".out");
 const PAGE_ORIGIN = "http://localhost:8788";
 const GOOGLE_CLIENT_ID = "dev-google-client-id"; // fixed values in launcher/dev-config.mjs
 const GOOGLE_CLIENT_SECRET = "dev-google-client-secret";
+const TELEGRAM_CLIENT_ID = "dev-telegram-client-id";
+const TELEGRAM_CLIENT_SECRET = "dev-telegram-client-secret";
 
 rmSync(out, { recursive: true, force: true });
 const apiA = join(out, "api-a");
@@ -29,7 +31,13 @@ cpSync(join(root, "functions-project"), apiA, {
   filter: (src) => !SKIP.some((s) => src.endsWith(s)),
 });
 
-const mock = await startMockProviders({ googleClientId: GOOGLE_CLIENT_ID, googleClientSecret: GOOGLE_CLIENT_SECRET, pageOrigin: PAGE_ORIGIN });
+const mock = await startMockProviders({
+  googleClientId: GOOGLE_CLIENT_ID,
+  googleClientSecret: GOOGLE_CLIENT_SECRET,
+  telegramClientId: TELEGRAM_CLIENT_ID,
+  telegramClientSecret: TELEGRAM_CLIENT_SECRET,
+  pageOrigin: PAGE_ORIGIN,
+});
 
 const gen = spawnSync(process.execPath, [
   join(root, "launcher", "dev-config.mjs"),

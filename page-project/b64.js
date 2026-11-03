@@ -27,6 +27,13 @@ export function b64urlEncode(bytes) {
   return out;
 }
 
+/** Standard base64 with padding (RFC 4648 §4), e.g. for HTTP Basic credentials. */
+export function b64Encode(bytes) {
+  let s = b64urlEncode(bytes).replace(/-/g, "+").replace(/_/g, "/");
+  while (s.length % 4 !== 0) s += "=";
+  return s;
+}
+
 export function b64urlDecode(str) {
   if (typeof str !== "string") throw new TypeError("b64urlDecode: string expected");
   const len = str.length;

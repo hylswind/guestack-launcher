@@ -11,5 +11,7 @@ import jwt from "./jwt.test.js";
 import pkce from "./pkce.test.js";
 import comm from "./comm.test.js";
 import google from "./google.test.js";
+import jws from "./jws.test.js";
+import telegram from "./telegram.test.js";
 
-export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm, google };
+export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm, google, jws, telegram };

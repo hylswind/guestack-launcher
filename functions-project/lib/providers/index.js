@@ -1,7 +1,7 @@
-// Provider table for /v1/login. Telegram is not implemented yet, so `provider: "telegram"`
-// is not in this table and the endpoint answers bad_request.
+// Provider table for /v1/login: the request's `provider` field selects an entry.
 import * as google from "./google.js";
+import * as telegram from "./telegram.js";
 
 export { ProviderError } from "./errors.js";
 
-export const PROVIDERS = Object.freeze({ google });
+export const PROVIDERS = Object.freeze({ google, telegram });

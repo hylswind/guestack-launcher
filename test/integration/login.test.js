@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { universalId } from "../../functions-project/lib/ids.js";
 import { TOKEN_TTL_S, verifyToken } from "../../functions-project/lib/token.js";
-import { GOOGLE_PHONES } from "../mock-providers.js";
+import { GOOGLE_PHONES, TELEGRAM_PHONES } from "../mock-providers.js";
 import { login, PAGE_ORIGIN, rawKey } from "./env.js";
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -46,7 +46,6 @@ test("google: provider outcomes map to the API error codes", async () => {
 
 test("bad_request for unsupported providers and malformed fields", async () => {
   for (const [why, overrides] of [
-    ["telegram (not implemented yet)", { provider: "telegram" }],
     ["unknown provider", { provider: "github" }],
     ["prototype key", { provider: "__proto__" }],
     ["missing provider", { provider: undefined }],
@@ -63,5 +62,41 @@ test("bad_request for unsupported providers and malformed fields", async () => {
     const res = await login(overrides);
     assert.equal(res.status, 400, why);
     assert.equal(res.body.error, "bad_request", why);
+  }
+});
+
+const telegram = (code) => login({ provider: "telegram", code });
+
+test("telegram: RS256 and ES256 id_tokens → the same uid as Google for the same number", async () => {
+  const google = await verifyToken(rawKey("K_TOKEN"), (await login()).body.token, now());
+  for (const code of ["telegram:ok", "telegram:ok-es256"]) {
+    const res = await telegram(code);
+    assert.equal(res.status, 200, code);
+    assert.equal(res.encrypted, true, code);
+    const verified = await verifyToken(rawKey("K_TOKEN"), res.body.token, now());
+    assert.ok(verified, code);
+    const expected = await universalId(rawKey("K_UNIVERSAL"), TELEGRAM_PHONES[code]);
+    assert.equal(hex(verified.uid), hex(expected), code);
+    assert.equal(hex(verified.uid), hex(google.uid), `${code}: cross-provider identity`);
+  }
+});
+
+test("telegram: provider outcomes map to the API error codes", async () => {
+  for (const [code, error, status] of [
+    ["telegram:unverified", "phone_unavailable", 403],
+    ["telegram:no-phone", "phone_unavailable", 403],
+    ["telegram:wrong-aud", "provider_error", 502],
+    ["telegram:wrong-iss", "provider_error", 502],
+    ["telegram:expired", "provider_error", 502],
+    ["telegram:bad-sig", "provider_error", 502],
+    ["telegram:unknown-kid", "provider_error", 502],
+    ["telegram:alg-none", "provider_error", 502],
+    ["telegram:token-401", "provider_error", 502],
+  ]) {
+    const res = await telegram(code);
+    assert.equal(res.status, status, code);
+    assert.equal(res.encrypted, true, code);
+    assert.equal(res.body.error, error, code);
+    assert.equal(res.body.token, undefined, code);
   }
 });

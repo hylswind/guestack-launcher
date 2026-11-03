@@ -9,10 +9,10 @@
 import { log } from "../log.js";
 import { normalizePhone } from "../phone.js";
 import { ProviderError } from "./errors.js";
+import { requestJson } from "./http.js";
 
 const TOKEN_BASE = "https://oauth2.googleapis.com";
 const PEOPLE_BASE = "https://people.googleapis.com";
-const TIMEOUT_MS = 10_000; // per provider request
 
 /**
  * Returns the verified phone as "+<digits>" or throws ProviderError.
@@ -55,29 +55,4 @@ export async function getVerifiedPhone({
   const phone = entry && entry.canonicalForm.startsWith("+") ? normalizePhone(entry.canonicalForm) : null;
   if (phone === null) throw new ProviderError("phone_unavailable");
   return phone;
-}
-
-async function requestJson(fetchImpl, url, init) {
-  let res;
-  try {
-    res = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
-  } catch {
-    log("provider_http_error");
-    throw new ProviderError("provider_error");
-  }
-  if (!res.ok) {
-    log("provider_http_error");
-    throw new ProviderError("provider_error");
-  }
-  let json;
-  try {
-    json = await res.json();
-  } catch {
-    json = null;
-  }
-  if (json === null || typeof json !== "object" || Array.isArray(json)) {
-    log("provider_bad_response");
-    throw new ProviderError("provider_error");
-  }
-  return json;
 }

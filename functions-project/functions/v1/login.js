@@ -1,7 +1,9 @@
 // POST /v1/login: authorization code → verified phone → token.
 // The middleware has already checked integrity and decrypted the envelope.
 
-import { GOOGLE_CLIENT_ID, PAGE_ORIGIN, PROVIDER_BASE_OVERRIDE } from "../../_generated/config.js";
+import {
+  GOOGLE_CLIENT_ID, PAGE_ORIGIN, PROVIDER_BASE_OVERRIDE, TELEGRAM_CLIENT_ID,
+} from "../../_generated/config.js";
 import { universalId } from "../../lib/ids.js";
 import { VERIFIER_RE } from "../../lib/pkce.js";
 import { PROVIDERS, ProviderError } from "../../lib/providers/index.js";
@@ -10,6 +12,7 @@ import { mintToken } from "../../lib/token.js";
 const MAX_CODE_LENGTH = 2048;
 const CLIENTS = {
   google: (env) => ({ clientId: GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }),
+  telegram: (env) => ({ clientId: TELEGRAM_CLIENT_ID, clientSecret: env.TELEGRAM_CLIENT_SECRET }),
 };
 const STATUS = { phone_unavailable: 403, provider_error: 502 };
 

@@ -1,4 +1,4 @@
-import { b64urlDecode, b64urlEncode } from "../../functions-project/lib/b64.js";
+import { b64Encode, b64urlDecode, b64urlEncode } from "../../functions-project/lib/b64.js";
 import { bytesEq, eq, throws } from "../lib/assert.js";
 import { B64URL, B64URL_BYTES } from "../fixtures/rfc.js";
 
@@ -10,6 +10,15 @@ export default {
       eq(b64urlEncode(enc(text)), b64, text);
       bytesEq(b64urlDecode(b64), enc(text), text);
     }
+  },
+  "standard padded base64 (RFC 4648 §10)": () => {
+    for (const [text, b64] of [["", ""], ["f", "Zg=="], ["fo", "Zm8="], ["foo", "Zm9v"], ["foob", "Zm9vYg=="],
+      ["fooba", "Zm9vYmE="], ["foobar", "Zm9vYmFy"]]) {
+      eq(b64Encode(enc(text)), b64, text);
+    }
+    eq(b64Encode(new Uint8Array([0xfb, 0xff, 0xbf])), "+/+/");
+    eq(b64Encode(enc("dev-telegram-client-id:dev-telegram-client-secret")),
+      "ZGV2LXRlbGVncmFtLWNsaWVudC1pZDpkZXYtdGVsZWdyYW0tY2xpZW50LXNlY3JldA==");
   },
   "RFC 7515 App. C and URL-safe alphabet vectors": () => {
     for (const { bytes, b64 } of B64URL_BYTES) {

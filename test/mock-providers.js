@@ -1,8 +1,9 @@
 // Dev-only mock of the identity providers for the integration tier.
-// The API reaches it through PROVIDER_BASE_OVERRIDE; routes live under /google/ (Telegram and
-// the authorization pages come later). The authorization `code` selects the scenario, so one mock
+// The API reaches it through PROVIDER_BASE_OVERRIDE; routes live under /google/ and /telegram/
+// (the browser-facing authorization pages come later). The authorization `code` selects the scenario, so one mock
 // instance serves every test. Every request the API sends is checked; a malformed one gets a
 // 400, which the API turns into provider_error and the happy-path tests catch.
+import { generateKeyPairSync, sign } from "node:crypto";
 import { createServer } from "node:http";
 
 export const GOOGLE_PHONES = {
@@ -10,7 +11,57 @@ export const GOOGLE_PHONES = {
   "google:ok-other": "+442079460958",
 };
 
+// Telegram sends the number without "+"; this is the same number as google:ok.
+export const TELEGRAM_PHONES = {
+  "telegram:ok": "+14155552671",
+  "telegram:ok-es256": "+14155552671",
+};
+
 const VERIFIER_RE = /^[A-Za-z0-9._~-]{43,128}$/;
+const TELEGRAM_ISSUER = "https://oauth.telegram.org";
+
+// Test-only Telegram signing keys, made with node:crypto at startup. "tg-rsa" and "tg-ec" are
+// published in the JWKS; "tg-rsa-other" signs under the published kid (bad signature);
+// "tg-unknown" is never published.
+const tgKeys = {
+  "tg-rsa": generateKeyPairSync("rsa", { modulusLength: 2048 }),
+  "tg-ec": generateKeyPairSync("ec", { namedCurve: "P-256" }),
+  "tg-rsa-other": generateKeyPairSync("rsa", { modulusLength: 2048 }),
+  "tg-unknown": generateKeyPairSync("rsa", { modulusLength: 2048 }),
+};
+const TELEGRAM_JWKS = {
+  keys: ["tg-rsa", "tg-ec"].map((kid) => ({ ...tgKeys[kid].publicKey.export({ format: "jwk" }), kid, use: "sig" })),
+};
+
+const b64u = (x) => Buffer.from(x).toString("base64url");
+
+function telegramIdToken(scenario, clientId) {
+  const now = Math.floor(Date.now() / 1000);
+  const claims = { iss: TELEGRAM_ISSUER, aud: clientId, sub: "777000", iat: now, exp: now + 300,
+    phone_number: "14155552671", phone_number_verified: true };
+  let signer = "tg-rsa";
+  let kid = "tg-rsa";
+  let alg = "RS256";
+  switch (scenario) {
+    case "telegram:ok": break;
+    case "telegram:ok-es256": signer = kid = "tg-ec"; alg = "ES256"; break;
+    case "telegram:unverified": claims.phone_number_verified = false; break;
+    case "telegram:no-phone": delete claims.phone_number; break;
+    case "telegram:wrong-aud": claims.aud = "someone-else"; break;
+    case "telegram:wrong-iss": claims.iss = "https://evil.example"; break;
+    case "telegram:expired": claims.iat = now - 600; claims.exp = now - 300; break;
+    case "telegram:bad-sig": signer = "tg-rsa-other"; break;
+    case "telegram:unknown-kid": signer = kid = "tg-unknown"; break;
+    case "telegram:alg-none":
+      return `${b64u(JSON.stringify({ alg: "none", typ: "JWT" }))}.${b64u(JSON.stringify(claims))}.`;
+    default: return null;
+  }
+  const input = `${b64u(JSON.stringify({ alg, kid, typ: "JWT" }))}.${b64u(JSON.stringify(claims))}`;
+  const key = tgKeys[signer].privateKey;
+  const sig = alg === "ES256" ? sign("sha256", Buffer.from(input), { key, dsaEncoding: "ieee-p1363" })
+    : sign("sha256", Buffer.from(input), key);
+  return `${input}.${b64u(sig)}`;
+}
 
 function peopleFor(scenario) {
   switch (scenario) {
@@ -37,7 +88,9 @@ function peopleFor(scenario) {
 }
 
 /** Starts the mock on 127.0.0.1. Returns { base, requests, close() }. */
-export async function startMockProviders({ googleClientId, googleClientSecret, pageOrigin }) {
+export async function startMockProviders({
+  googleClientId, googleClientSecret, telegramClientId, telegramClientSecret, pageOrigin,
+}) {
   const requests = []; // { path, ok } for debugging failed tests
 
   const server = createServer(async (req, res) => {
@@ -73,6 +126,31 @@ export async function startMockProviders({ googleClientId, googleClientSecret, p
       if (!valid) return send(401, { error: "unauthenticated" });
       const r = peopleFor(auth.slice("Bearer at.".length));
       return send(r.status, r.body, r.raw);
+    }
+
+    if (req.method === "POST" && url.pathname === "/telegram/token") {
+      const form = new URLSearchParams(body);
+      const code = form.get("code") || "";
+      const basic = `Basic ${Buffer.from(`${telegramClientId}:${telegramClientSecret}`).toString("base64")}`;
+      const valid = (req.headers["content-type"] || "").startsWith("application/x-www-form-urlencoded")
+        && req.headers.authorization === basic
+        && form.get("grant_type") === "authorization_code"
+        && form.get("client_id") === telegramClientId
+        && !form.has("client_secret")
+        && form.get("redirect_uri") === pageOrigin
+        && VERIFIER_RE.test(form.get("code_verifier") || "")
+        && code.startsWith("telegram:");
+      requests.push({ path: url.pathname, ok: valid });
+      if (!valid) return send(400, { error: "invalid_request" });
+      if (code === "telegram:token-401") return send(401, { error: "invalid_client" });
+      const idToken = telegramIdToken(code, telegramClientId);
+      if (idToken === null) return send(400, { error: "invalid_grant" });
+      return send(200, { access_token: "tg-at", token_type: "Bearer", expires_in: 300, id_token: idToken });
+    }
+
+    if (req.method === "GET" && url.pathname === "/telegram/.well-known/jwks.json") {
+      requests.push({ path: url.pathname, ok: true });
+      return send(200, TELEGRAM_JWKS);
     }
 
     requests.push({ path: url.pathname, ok: false });

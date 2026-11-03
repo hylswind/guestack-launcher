@@ -6,6 +6,7 @@ const CODES = new Set([
   "internal_error",
   "provider_http_error",
   "provider_bad_response",
+  "provider_bad_token",
 ]);
 
 export function log(code) {
