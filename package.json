@@ -1,0 +1,22 @@
+{
+  "name": "guestack-launcher",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Guestack service and launcher (Cloudflare Pages functions, static page, attested launch workflow). Product code has no runtime dependencies; this manifest exists only for dev tooling.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "bash scripts/lint.sh",
+    "sync": "bash scripts/sync-shared.sh",
+    "test:node": "node --test test/run-node.js",
+    "test:workerd": "node test/run-workerd.js",
+    "test:browser": "node test/run-browser.js",
+    "test": "npm run lint && npm run test:node && npm run test:workerd && npm run test:browser"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

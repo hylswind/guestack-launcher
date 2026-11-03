@@ -1,0 +1,9 @@
+# Files whose canonical source is functions-project/lib/ and which are committed as
+# byte-identical copies in page-project/ (DECISIONS.md D-06). One file name per line.
+# scripts/sync-shared.sh copies them; scripts/lint.sh fails if any pair differs.
+b64.js
+bytes.js
+hmac.js
+hkdf.js
+comm.js
+pkce.js

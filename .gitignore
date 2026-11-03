@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+# [generated] by launcher/gen-config.sh or launcher/dev-launch.sh; never committed (DESIGN.md §14)
+functions-project/_generated/config.js
+page-project/config.js
+test/.out/
