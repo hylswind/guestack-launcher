@@ -7,3 +7,6 @@ page-project/_headers
 # local secrets written by launcher/dev-launch.sh
 .dev.vars
 test/.out/
+# written by the launcher workflow; published only as an attested Release asset
+launch.json
+launch.json.tmp

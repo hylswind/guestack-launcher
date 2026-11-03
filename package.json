@@ -16,7 +16,8 @@
     "test:browser": "node test/run-browser.js",
     "test:integration": "node test/run-integration.js",
     "test:e2e": "node test/run-e2e.js",
-    "test": "npm run lint && npm run test:node && npm run test:workerd && npm run test:browser && npm run test:integration && npm run test:e2e"
+    "test:launcher": "node --test --test-concurrency=1 test/launcher/launch.test.js",
+    "test": "npm run lint && npm run test:node && npm run test:launcher && npm run test:workerd && npm run test:browser && npm run test:integration && npm run test:e2e"
   },
   "devDependencies": {
     "playwright": "1.64.1"
