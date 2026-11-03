@@ -6,7 +6,7 @@
 //                                [--api-base URL] [--provider-base URL] [--dev-vars] [--json]
 //
 // --functions DIR   write DIR/_generated/config.js           (default functions-project)
-// --page DIR        write DIR/config.js                      (default page-project)
+// --page DIR        write DIR/config.js and DIR/_headers     (default page-project)
 // --dev-vars        also write DIR/.dev.vars for `npx wrangler pages dev --cwd DIR`
 // --json            print { secrets, config } on stdout (used by test/run-integration.js)
 
@@ -80,6 +80,21 @@ mkdirSync(args.page, { recursive: true });
 writeFileSync(join(args.page, "config.js"), js([
   "DEV", "API_BASE_URL", "COMM_PUBLIC_JWK", "GOOGLE_CLIENT_ID", "TELEGRAM_CLIENT_ID",
 ]));
+
+// The page CSP allows connections to the API origin only, so _headers depends on API_BASE_URL.
+const csp = [
+  "default-src 'none'", "script-src 'self'", "style-src 'self' 'unsafe-inline'",
+  `connect-src ${new URL(config.API_BASE_URL).origin}`, "form-action 'none'", "base-uri 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+writeFileSync(join(args.page, "_headers"), [
+  "/*",
+  `  Content-Security-Policy: ${csp}`,
+  "  Referrer-Policy: no-referrer",
+  "  X-Frame-Options: DENY",
+  "  X-Content-Type-Options: nosniff",
+  "",
+].join("\n"));
 
 if (args["dev-vars"]) {
   // Single quotes keep each value literal (JSON contains double quotes, never single quotes).

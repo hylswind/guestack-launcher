@@ -13,5 +13,6 @@ import comm from "./comm.test.js";
 import google from "./google.test.js";
 import jws from "./jws.test.js";
 import telegram from "./telegram.test.js";
+import flow from "./flow.test.js";
 
-export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm, google, jws, telegram };
+export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm, google, jws, telegram, flow };

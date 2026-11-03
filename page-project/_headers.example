@@ -1,0 +1,5 @@
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src https://api.example; form-action 'none'; base-uri 'none'; frame-ancestors 'none'
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff

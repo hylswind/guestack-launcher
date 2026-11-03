@@ -1,4 +1,4 @@
-# Lint, unit tests in all three runtimes, and the integration tier. This workflow never holds
+# Lint, unit tests in all three runtimes, the integration tier and browser E2E. This workflow never holds
 # secrets; the attested launcher is a separate workflow.
 name: test
 
@@ -27,3 +27,4 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
       - run: npm run test:integration
+      - run: npm run test:e2e

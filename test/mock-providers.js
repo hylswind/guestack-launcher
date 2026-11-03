@@ -1,9 +1,9 @@
 // Dev-only mock of the identity providers for the integration tier.
 // The API reaches it through PROVIDER_BASE_OVERRIDE; routes live under /google/ and /telegram/
-// (the browser-facing authorization pages come later). The authorization `code` selects the scenario, so one mock
+// (including the browser-facing consent pages /google/auth and /telegram/auth). The authorization `code` selects the scenario, so one mock
 // instance serves every test. Every request the API sends is checked; a malformed one gets a
 // 400, which the API turns into provider_error and the happy-path tests catch.
-import { generateKeyPairSync, sign } from "node:crypto";
+import { createHash, generateKeyPairSync, randomBytes, sign } from "node:crypto";
 import { createServer } from "node:http";
 
 export const GOOGLE_PHONES = {
@@ -87,11 +87,72 @@ function peopleFor(scenario) {
   }
 }
 
-/** Starts the mock on 127.0.0.1. Returns { base, requests, close() }. */
+// Scenarios offered on the consent pages, one link each.
+const SCENARIOS = {
+  google: ["google:ok", "google:ok-other", "google:unverified", "google:no-canonical", "google:no-phones",
+    "google:token-400", "google:people-500", "google:bad-json"],
+  telegram: ["telegram:ok", "telegram:ok-es256", "telegram:unverified", "telegram:no-phone", "telegram:wrong-aud",
+    "telegram:wrong-iss", "telegram:expired", "telegram:bad-sig", "telegram:unknown-kid", "telegram:alg-none",
+    "telegram:token-401"],
+};
+const SCOPES = {
+  google: "openid https://www.googleapis.com/auth/user.phonenumbers.read",
+  telegram: "openid phone",
+};
+const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/** Starts the mock on 127.0.0.1. Returns { base, requests, stats, close() }. */
 export async function startMockProviders({
   googleClientId, googleClientSecret, telegramClientId, telegramClientSecret, pageOrigin,
 }) {
   const requests = []; // { path, ok } for debugging failed tests
+  const stats = { authHits: { google: 0, telegram: 0 }, pkceChecked: 0 };
+  // Codes issued by a consent page: "<scenario>.<id>" → { provider, challenge, redirectUri }.
+  // Single use; the token endpoint requires the PKCE verifier to match. Bare scenario codes
+  // (used by the integration tier, which has no browser) skip this check.
+  const issued = new Map();
+  const clientIds = { google: googleClientId, telegram: telegramClientId };
+
+  // Returns the scenario for a token request, or null if the code or its PKCE proof is invalid.
+  function redeem(provider, code, verifier, redirectUri) {
+    const dot = code.indexOf(".");
+    if (dot === -1) return code;
+    const grant = issued.get(code);
+    issued.delete(code);
+    if (!grant || grant.provider !== provider || grant.redirectUri !== redirectUri) return null;
+    if (createHash("sha256").update(verifier).digest("base64url") !== grant.challenge) return null;
+    stats.pkceChecked++;
+    return code.slice(0, dot);
+  }
+
+  function consentPage(provider, url, res) {
+    const q = url.searchParams;
+    const checks = {
+      client_id: q.get("client_id") === clientIds[provider],
+      redirect_uri: q.get("redirect_uri") === pageOrigin,
+      response_type: q.get("response_type") === "code",
+      scope: q.get("scope") === SCOPES[provider],
+      code_challenge: /^[A-Za-z0-9_-]{43}$/.test(q.get("code_challenge") || ""),
+      code_challenge_method: q.get("code_challenge_method") === "S256",
+      state: (q.get("state") || "").length > 0,
+      prompt: provider !== "google" || q.get("prompt") === "select_account",
+    };
+    const failed = Object.keys(checks).filter((k) => !checks[k]);
+    res.writeHead(failed.length ? 400 : 200, { "content-type": "text/html; charset=utf-8" });
+    if (failed.length) {
+      res.end(`<!doctype html><p id="invalid">${escapeHtml(failed.join(","))}</p>`);
+      return;
+    }
+    stats.authHits[provider]++;
+    const back = (params) => `${pageOrigin}?${new URLSearchParams({ ...params, state: q.get("state") })}`;
+    const links = SCENARIOS[provider].map((scenario) => {
+      const code = `${scenario}.${randomBytes(8).toString("hex")}`;
+      issued.set(code, { provider, challenge: q.get("code_challenge"), redirectUri: q.get("redirect_uri") });
+      return `<li><a data-scenario="${scenario}" href="${escapeHtml(back({ code }))}">Approve as ${scenario}</a></li>`;
+    });
+    links.push(`<li><a data-scenario="deny" href="${escapeHtml(back({ error: "access_denied" }))}">Deny</a></li>`);
+    res.end(`<!doctype html><title>Mock ${provider} consent</title><ul>${links.join("")}</ul>`);
+  }
 
   const server = createServer(async (req, res) => {
     const url = new URL(req.url, "http://mock");
@@ -105,7 +166,7 @@ export async function startMockProviders({
 
     if (req.method === "POST" && url.pathname === "/google/token") {
       const form = new URLSearchParams(body);
-      const code = form.get("code") || "";
+      const code = redeem("google", form.get("code") || "", form.get("code_verifier") || "", form.get("redirect_uri")) || "";
       const valid = (req.headers["content-type"] || "").startsWith("application/x-www-form-urlencoded")
         && form.get("grant_type") === "authorization_code"
         && form.get("client_id") === googleClientId
@@ -130,7 +191,7 @@ export async function startMockProviders({
 
     if (req.method === "POST" && url.pathname === "/telegram/token") {
       const form = new URLSearchParams(body);
-      const code = form.get("code") || "";
+      const code = redeem("telegram", form.get("code") || "", form.get("code_verifier") || "", form.get("redirect_uri")) || "";
       const basic = `Basic ${Buffer.from(`${telegramClientId}:${telegramClientSecret}`).toString("base64")}`;
       const valid = (req.headers["content-type"] || "").startsWith("application/x-www-form-urlencoded")
         && req.headers.authorization === basic
@@ -153,6 +214,13 @@ export async function startMockProviders({
       return send(200, TELEGRAM_JWKS);
     }
 
+    if (req.method === "GET" && (url.pathname === "/google/auth" || url.pathname === "/telegram/auth")) {
+      requests.push({ path: url.pathname, ok: true });
+      return consentPage(url.pathname.split("/")[1], url, res);
+    }
+
+    if (req.method === "GET" && url.pathname === "/__stats") return send(200, stats);
+
     requests.push({ path: url.pathname, ok: false });
     send(404, { error: "not_found" });
   });
@@ -161,6 +229,7 @@ export async function startMockProviders({
   return {
     base: `http://127.0.0.1:${server.address().port}`,
     requests,
+    stats,
     close: () => new Promise((resolve) => server.close(resolve)),
   };
 }

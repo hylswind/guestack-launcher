@@ -46,8 +46,8 @@ while IFS= read -r name; do
   cmp -s "$src" "$dst" || fail "$dst differs from $src (run: npm run sync)"
 done < scripts/shared-files.txt
 
-# 5. Generated configs are never committed; their .example templates always exist.
-for c in functions-project/_generated/config.js page-project/config.js; do
+# 5. Generated files are never committed; their .example templates always exist.
+for c in functions-project/_generated/config.js page-project/config.js page-project/_headers; do
   [[ -f "$c.example" ]] || fail "$c.example is missing"
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
      && git ls-files --error-unmatch "$c" >/dev/null 2>&1; then

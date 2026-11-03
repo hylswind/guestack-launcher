@@ -7,12 +7,13 @@ export const WRANGLER = "wrangler@4.156.2";
 export const COMPATIBILITY_DATE = "2025-09-01";
 
 /**
- * Starts `wrangler pages dev <dir>` in `cwd` with the given --binding values.
+ * Starts `wrangler pages dev <dir>` in `cwd` with the given --binding values, on `port` if given
+ * (needed when the origin must be known before configs are generated).
  * Returns { port, base, stop(), output(), exited() }. Nothing is read from .dev.vars unless the
  * caller's cwd contains one.
  */
-export async function startPagesDev({ cwd, dir = "public", bindings = {}, logLevel = "warn" }) {
-  const port = await freePort();
+export async function startPagesDev({ cwd, dir = "public", bindings = {}, logLevel = "warn", port: fixedPort }) {
+  const port = fixedPort ?? (await freePort());
   // Each instance needs its own devtools inspector port, or a second instance fails to bind.
   const inspectorPort = await freePort();
   const args = ["--yes", WRANGLER, "pages", "dev", dir, "--ip", "127.0.0.1", "--port", String(port),

@@ -8,11 +8,14 @@ cd "$(dirname "$0")/.."
 node launcher/dev-config.mjs --functions functions-project --page page-project --dev-vars "$@"
 
 cat <<'EOF'
-Wrote functions-project/_generated/config.js, functions-project/.dev.vars, page-project/config.js
-(all git-ignored).
+Wrote functions-project/_generated/config.js, functions-project/.dev.vars, page-project/config.js,
+page-project/_headers (all git-ignored).
 
 Start the API:
   npx wrangler pages dev public --cwd functions-project --port 8787
+
+Start the page (the origin must match PAGE_ORIGIN, http://localhost:8788 by default):
+  npx wrangler pages dev . --cwd page-project --port 8788
 
 Smoke test (expects 400 {"error":"bad_envelope"}):
   curl -s -X POST http://localhost:8787/v1/issue -H 'content-type: application/json' -d '{}'

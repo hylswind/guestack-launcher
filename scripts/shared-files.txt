@@ -7,3 +7,5 @@ hmac.js
 hkdf.js
 comm.js
 pkce.js
+validate.js
+token.js
