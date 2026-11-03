@@ -14,7 +14,8 @@ export const API_A = required("GUESTACK_API_A");
 export const API_B = required("GUESTACK_API_B");
 const dev = JSON.parse(readFileSync(required("GUESTACK_DEV_JSON"), "utf8"));
 export const config = dev.config;
-export const PAGE_ORIGIN = config.PAGE_ORIGIN;
+// The page origin the harness registered with the mock providers as the redirect URI.
+export const PAGE_ORIGIN = dev.pageOrigin;
 export const rawKey = (name) => b64urlDecode(dev.secrets[name]);
 
 /** POST through the envelope to instance A (or `base`), with the page's Origin by default. */

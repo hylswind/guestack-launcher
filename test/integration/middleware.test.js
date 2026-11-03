@@ -16,37 +16,26 @@ const assertSecurityHeaders = (res, why) => {
 const post = (path, body, headers = {}, base = API_A) =>
   raw(base, path, { method: "POST", headers: { "content-type": "application/json", ...headers }, body });
 
-test("CORS: the page origin gets Access-Control-Allow-Origin and Vary", async () => {
-  const res = await issue({ token });
-  assert.equal(res.status, 200);
-  assert.equal(res.headers.get("access-control-allow-origin"), PAGE_ORIGIN);
-  assert.match(res.headers.get("vary") || "", /Origin/);
-  assertSecurityHeaders(res, "200");
-});
-
-test("CORS: any other Origin is refused with a plain 403", async () => {
-  for (const origin of ["https://evil.example", "http://localhost:8789", "null"]) {
+test("CORS: any origin, or none, is served with Access-Control-Allow-Origin: *", async () => {
+  for (const origin of [PAGE_ORIGIN, "https://evil.example", "http://localhost:8789", "null", null]) {
     const res = await issue({ token }, { origin });
-    assert.equal(res.status, 403, origin);
-    assert.equal(res.encrypted, false, origin);
-    assert.deepEqual(res.body, { error: "forbidden" }, origin);
-    assert.equal(res.headers.get("access-control-allow-origin"), null, origin);
+    assert.equal(res.status, 200, String(origin));
+    assert.equal(res.encrypted, true, String(origin));
+    assert.equal(typeof res.body.jwt, "string", String(origin));
+    assert.equal(res.headers.get("access-control-allow-origin"), "*", String(origin));
+    assert.equal(res.headers.get("access-control-allow-credentials"), null, "credentials are never allowed");
+    assert.equal(res.headers.get("vary"), null, "nothing varies by origin");
+    assertSecurityHeaders(res, String(origin));
   }
 });
 
-test("CORS: requests without an Origin header are served without ACAO", async () => {
-  const res = await issue({ token }, { origin: null });
-  assert.equal(res.status, 200);
-  assert.equal(res.headers.get("access-control-allow-origin"), null);
-});
-
-test("CORS: preflight answers 204 with the allowed method and header", async () => {
+test("CORS: preflight answers 204 for any origin with the allowed method and header", async () => {
   const res = await raw(API_A, "/v1/login", {
     method: "OPTIONS",
-    headers: { Origin: PAGE_ORIGIN, "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type" },
+    headers: { Origin: "https://anything.example", "Access-Control-Request-Method": "POST", "Access-Control-Request-Headers": "content-type" },
   });
   assert.equal(res.status, 204);
-  assert.equal(res.headers.get("access-control-allow-origin"), PAGE_ORIGIN);
+  assert.equal(res.headers.get("access-control-allow-origin"), "*");
   assert.equal(res.headers.get("access-control-allow-methods"), "POST, OPTIONS");
   assert.equal(res.headers.get("access-control-allow-headers"), "Content-Type");
 });
@@ -87,6 +76,7 @@ test("integrity gate: instance with a wrong K_TOKEN answers 503 to everything un
     ["issue", await issue({ token }, { base: API_B })],
     ["garbage", await post("/v1/issue", "{}", {}, API_B)],
     ["preflight", await raw(API_B, "/v1/issue", { method: "OPTIONS", headers: { Origin: PAGE_ORIGIN } })],
+    ["foreign origin", await issue({ token }, { base: API_B, origin: "https://evil.example" })],
     ["repeat", await issue({ token }, { base: API_B })],
   ]) {
     assert.equal(res.status, 503, why);

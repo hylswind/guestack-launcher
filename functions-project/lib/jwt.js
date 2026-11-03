@@ -34,16 +34,17 @@ export function importJwtSigningKey(privateJwk) {
   return crypto.subtle.importKey("jwk", { kty, crv, x, y, d }, ECDSA_P256, false, ["sign"]);
 }
 
-/** The JWT claims, exactly these and no others; `sub` is the 32-byte per_rp_id. */
-export function buildClaims({ iss, sub, aud, nowS, session }) {
-  if (typeof iss !== "string" || iss.length === 0) throw new TypeError("buildClaims: iss expected");
+/**
+ * The JWT claims, exactly these and no others; `sub` is the 32-byte per_rp_id. There is no
+ * iss: the RP pins the launch's public key, so a valid signature already names the issuer.
+ */
+export function buildClaims({ sub, aud, nowS, session }) {
   if (typeof aud !== "string" || aud.length === 0) throw new TypeError("buildClaims: aud expected");
   assertBytes(sub, "buildClaims");
   if (sub.length !== 32) throw new TypeError("buildClaims: 32-byte sub expected");
   if (!Number.isSafeInteger(nowS) || nowS <= 0) throw new TypeError("buildClaims: unix seconds expected");
   if (validateSession(session) === null) throw new TypeError("buildClaims: bad session");
   return {
-    iss,
     sub: b64urlEncode(sub),
     aud,
     iat: nowS,

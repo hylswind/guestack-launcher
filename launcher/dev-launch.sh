@@ -14,7 +14,8 @@ page-project/_headers (all git-ignored).
 Start the API:
   npx wrangler pages dev public --cwd functions-project --port 8787
 
-Start the page (the origin must match PAGE_ORIGIN, http://localhost:8788 by default):
+Start the page (its origin is the OAuth redirect URI: register http://localhost:8788 with a
+provider to try real logins):
   npx wrangler pages dev . --cwd page-project --port 8788
 
 Smoke test (expects 400 {"error":"bad_envelope"}):

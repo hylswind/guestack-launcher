@@ -1,8 +1,8 @@
 // The page's only network client: every request goes through the encrypted envelope.
 // Never throws. Returns the decrypted response object, a plain error the API sent before an
 // envelope existed ({ error: "integrity" }, { error: "bad_envelope" }), or { error: "network" }
-// when the API cannot be reached. A refused CORS request (the page opened at any origin other
-// than the deployment's) also surfaces as a network error: fetch cannot tell them apart.
+// when the API cannot be reached (fetch reports refused connections, CORS failures and timeouts
+// alike).
 
 import { seal } from "./comm.js";
 import { API_BASE_URL, COMM_PUBLIC_JWK } from "./config.js";

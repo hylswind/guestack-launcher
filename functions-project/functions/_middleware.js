@@ -1,9 +1,14 @@
 // Runs for every request: integrity gate, routing, CORS, security headers,
 // encrypted envelope, error shaping. Responses produced before an envelope exists are plain
 // JSON, because there is no key to encrypt them with; everything after it is encrypted.
+//
+// The functions know nothing about the page that calls them. CORS allows any origin without
+// credentials: every response is encrypted to the caller's ephemeral key and nothing can be
+// obtained without a valid token, so restricting the origin would add nothing. Host or origin
+// filtering, if an operator wants it, belongs to the Cloudflare layer in front of a custom host.
 
 import {
-  COMM_PUBLIC_JWK, JWT_PUBLIC_JWK, PAGE_ORIGIN, SECRET_HASHES,
+  COMM_PUBLIC_JWK, JWT_PUBLIC_JWK, SECRET_HASHES,
 } from "../_generated/config.js";
 import { b64urlDecode } from "../lib/b64.js";
 import { concat, hexEncode, timingSafeEqual, utf8Decode, utf8Encode } from "../lib/bytes.js";
@@ -70,24 +75,20 @@ async function checkIntegrity(env) {
 
 // ---------------------------------------------------------------- responses
 
-function headers(cors) {
-  const h = new Headers({
+function headers() {
+  return new Headers({
     "Content-Type": "application/json",
     "Cache-Control": "no-store",
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
-    Vary: "Origin",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
   });
-  if (cors) {
-    h.set("Access-Control-Allow-Origin", PAGE_ORIGIN);
-    h.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-    h.set("Access-Control-Allow-Headers", "Content-Type");
-  }
-  return h;
 }
 
-function plain(status, obj, cors) {
-  return new Response(JSON.stringify(obj), { status, headers: headers(cors) });
+function plain(status, obj) {
+  return new Response(JSON.stringify(obj), { status, headers: headers() });
 }
 
 async function readBody(request) {
@@ -119,24 +120,19 @@ export async function onRequest(context) {
 
   // Integrity gate.
   const integrity = await integrityGate(env);
-  const origin = request.headers.get("Origin");
-  const cors = origin === PAGE_ORIGIN;
-  if (!integrity.ok) return plain(503, { error: "integrity" }, cors);
-
-  // CORS: an Origin header other than the page's is refused outright.
-  if (origin !== null && !cors) return plain(403, { error: "forbidden" }, false);
+  if (!integrity.ok) return plain(503, { error: "integrity" });
 
   // Routing.
-  if (!ROUTES.has(url.pathname)) return plain(404, { error: "not_found" }, cors);
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: headers(cors) });
+  if (!ROUTES.has(url.pathname)) return plain(404, { error: "not_found" });
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: headers() });
   if (request.method !== "POST") {
-    const res = plain(405, { error: "method_not_allowed" }, cors);
+    const res = plain(405, { error: "method_not_allowed" });
     res.headers.set("Allow", "POST, OPTIONS");
     return res;
   }
 
   // Envelope.
-  const badEnvelope = () => plain(400, { error: "bad_envelope" }, cors);
+  const badEnvelope = () => plain(400, { error: "bad_envelope" });
   if (!/^application\/json\s*(;|$)/i.test(request.headers.get("Content-Type") || "")) return badEnvelope();
   let envelope;
   try {
@@ -150,7 +146,7 @@ export async function onRequest(context) {
   context.data.keys = integrity.keys;
   context.data.plaintext = envelope.plaintext;
   context.data.reply = async (obj, status = 200) =>
-    new Response(JSON.stringify(await envelope.reply(obj)), { status, headers: headers(cors) });
+    new Response(JSON.stringify(await envelope.reply(obj)), { status, headers: headers() });
 
   // Error shaping: nothing about the failure leaves the isolate.
   try {
@@ -160,7 +156,7 @@ export async function onRequest(context) {
     try {
       return await context.data.reply({ error: "internal" }, 500);
     } catch {
-      return plain(500, { error: "internal" }, cors);
+      return plain(500, { error: "internal" });
     }
   }
 }

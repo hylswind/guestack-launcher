@@ -25,8 +25,8 @@ function copyProject(name, dest) {
 }
 
 /**
- * Fresh copies in `out`, the mock started for `pageOrigin`, and DEV configs generated with
- * `launcher/dev-config.mjs`. Returns { mock, dev: { secrets, config }, apiDir, pageDir }.
+ * Fresh copies in `out`, the mock started for `pageOrigin` (the only redirect URI it accepts, as a
+ * provider would), and DEV configs generated with `launcher/dev-config.mjs`. Returns { mock, dev: { secrets, config }, apiDir, pageDir }.
  */
 export async function prepareStack({ out, pageOrigin, apiBase }) {
   rmSync(out, { recursive: true, force: true });
@@ -39,7 +39,7 @@ export async function prepareStack({ out, pageOrigin, apiBase }) {
   const gen = spawnSync(process.execPath, [
     join(ROOT, "launcher", "dev-config.mjs"),
     "--functions", apiDir, "--page", pageDir,
-    "--page-origin", pageOrigin, "--api-base", apiBase, "--provider-base", mock.base, "--json",
+    "--api-base", apiBase, "--provider-base", mock.base, "--json",
   ], { encoding: "utf8" });
   if (gen.status !== 0) {
     await mock.close();

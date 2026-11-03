@@ -12,13 +12,12 @@ import { prepareStack, ROOT, runNodeTests, smokeStatus } from "./lib/stack.js";
 import { startPagesDev, waitFor } from "./lib/wrangler.js";
 
 const out = join(ROOT, "test", ".out", "integration");
-const { mock, dev, apiDir } = await prepareStack({
-  out, pageOrigin: "http://localhost:8788", apiBase: "http://localhost:8787",
-});
+const pageOrigin = "http://localhost:8788"; // no page is served; the mocks accept it as redirect URI
+const { mock, dev, apiDir } = await prepareStack({ out, pageOrigin, apiBase: "http://localhost:8787" });
 const apiB = join(out, "api-b");
 cpSync(apiDir, apiB, { recursive: true });
 const devJson = join(out, "dev.json");
-writeFileSync(devJson, JSON.stringify({ ...dev, mockBase: mock.base }));
+writeFileSync(devJson, JSON.stringify({ ...dev, mockBase: mock.base, pageOrigin }));
 
 const wrongSecrets = { ...dev.secrets, K_TOKEN: Buffer.alloc(32, 1).toString("base64url") };
 const instances = [

@@ -8,9 +8,9 @@
 // Usage:
 //   const claims = await verifyGuestackJwt(jwt, {
 //     publicJwk,              // jwt_public_jwk from the attested launch.json, pinned in RP config
-//     iss,                    // page_project.preview_url from the same launch.json
 //     aud,                    // this RP's origin, exactly as new URL(...).origin serializes it
 //   });
+//   // There is no iss claim: the pinned key is what identifies the Guestack instance.
 //   // Then: claims.session must be a session this RP issued within the last
 //   // 10 minutes and not yet consumed; consume it. Use claims.sub as the guest ID.
 
@@ -32,7 +32,7 @@ function decodeJsonSegment(s) {
 }
 
 /** Returns the claims or throws Error whose message is one short reason code. */
-export async function verifyGuestackJwt(jwt, { publicJwk, iss, aud, nowS = Math.floor(Date.now() / 1000) }) {
+export async function verifyGuestackJwt(jwt, { publicJwk, aud, nowS = Math.floor(Date.now() / 1000) }) {
   if (typeof jwt !== "string") throw new Error("malformed");
   const parts = jwt.split(".");
   if (parts.length !== 3) throw new Error("malformed");
@@ -59,9 +59,8 @@ export async function verifyGuestackJwt(jwt, { publicJwk, iss, aud, nowS = Math.
   );
   if (!valid) throw new Error("signature");
 
-  // Issuer, audience and time window.
+  // Audience and time window.
   const claims = decodeJsonSegment(parts[1]);
-  if (claims.iss !== iss) throw new Error("iss");
   if (claims.aud !== aud) throw new Error("aud");
   if (!Number.isInteger(claims.iat) || claims.iat > nowS + 60) throw new Error("iat");
   if (!Number.isInteger(claims.exp) || claims.exp <= nowS) throw new Error("exp");

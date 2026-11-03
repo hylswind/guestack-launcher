@@ -20,9 +20,9 @@
 // Error codes: no_referrer, bad_request, bad_state, user_cancelled, provider_error, unreachable,
 //              unavailable, storage, unexpected.
 //
-// The page uses its own location.origin and never checks it: the API accepts only the
-// deployment's origin (CORS and the redirect_uri check), so a page opened anywhere else fails
-// at its first API call with "unreachable".
+// The page uses its own location.origin and never checks it. That origin is the OAuth
+// redirect_uri, which the provider accepts only if it is the registered deployment URL, so a
+// page opened anywhere else (where localStorage holds no token) cannot complete a login.
 
 import { peekTokenExp } from "./token.js";
 import { codeChallenge, generateState, generateVerifier } from "./pkce.js";

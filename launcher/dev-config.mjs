@@ -2,8 +2,8 @@
 // Dev-only: generate local keys and DEV=true configs.
 // Never used by the launcher, which writes the same config.js shapes at launch.
 //
-//   node launcher/dev-config.mjs [--functions DIR] [--page DIR] [--page-origin URL]
-//                                [--api-base URL] [--provider-base URL] [--dev-vars] [--json]
+//   node launcher/dev-config.mjs [--functions DIR] [--page DIR] [--api-base URL]
+//                                [--provider-base URL] [--dev-vars] [--json]
 //
 // --functions DIR   write DIR/_generated/config.js           (default functions-project)
 // --page DIR        write DIR/config.js and DIR/_headers     (default page-project)
@@ -20,7 +20,6 @@ const { values: args } = parseArgs({
   options: {
     functions: { type: "string", default: "functions-project" },
     page: { type: "string", default: "page-project" },
-    "page-origin": { type: "string", default: "http://localhost:8788" },
     "api-base": { type: "string", default: "http://localhost:8787" },
     "provider-base": { type: "string" },
     "dev-vars": { type: "boolean", default: false },
@@ -58,7 +57,6 @@ jwtPublic.kid = await jwkThumbprint(jwtPublic);
 const config = {
   LAUNCH_ID: "dev",
   DEV: true,
-  PAGE_ORIGIN: args["page-origin"],
   API_BASE_URL: args["api-base"],
   GOOGLE_CLIENT_ID: "dev-google-client-id",
   TELEGRAM_CLIENT_ID: "dev-telegram-client-id",
@@ -73,7 +71,7 @@ const js = (names) => HEADER + names.map((n) => `export const ${n} = ${JSON.stri
 
 mkdirSync(join(args.functions, "_generated"), { recursive: true });
 writeFileSync(join(args.functions, "_generated", "config.js"), js([
-  "LAUNCH_ID", "DEV", "PAGE_ORIGIN", "API_BASE_URL", "GOOGLE_CLIENT_ID", "TELEGRAM_CLIENT_ID",
+  "LAUNCH_ID", "DEV", "GOOGLE_CLIENT_ID", "TELEGRAM_CLIENT_ID",
   "PROVIDER_BASE_OVERRIDE", "JWT_PUBLIC_JWK", "COMM_PUBLIC_JWK", "SECRET_HASHES",
 ]));
 mkdirSync(args.page, { recursive: true });

@@ -55,13 +55,27 @@ test("bad_request for unsupported providers and malformed fields", async () => {
     ["code not a string", { code: 42 }],
     ["verifier too short", { code_verifier: "short" }],
     ["verifier bad chars", { code_verifier: "a".repeat(50) + "+" }],
-    ["redirect_uri with slash", { redirect_uri: PAGE_ORIGIN + "/" }],
-    ["foreign redirect_uri", { redirect_uri: "https://evil.example" }],
     ["missing redirect_uri", { redirect_uri: undefined }],
+    ["empty redirect_uri", { redirect_uri: "" }],
+    ["redirect_uri not a string", { redirect_uri: 42 }],
+    ["redirect_uri too long", { redirect_uri: "https://a.example/" + "x".repeat(2048) }],
   ]) {
     const res = await login(overrides);
     assert.equal(res.status, 400, why);
     assert.equal(res.body.error, "bad_request", why);
+  }
+});
+
+test("redirect_uri is forwarded unchanged; the provider, not the API, rejects an unregistered one", async () => {
+  // The mocks accept only the registered page origin as redirect URI, as Google and Telegram do.
+  for (const provider of ["google", "telegram"]) {
+    for (const redirect_uri of ["https://evil.example", `${PAGE_ORIGIN}/`]) {
+      const res = await login({ provider, code: `${provider}:ok`, redirect_uri });
+      assert.equal(res.status, 502, `${provider} ${redirect_uri}`);
+      assert.equal(res.body.error, "provider_error", `${provider} ${redirect_uri}`);
+    }
+    const ok = await login({ provider, code: `${provider}:ok`, redirect_uri: PAGE_ORIGIN });
+    assert.equal(ok.status, 200, `${provider}: the registered URI works`);
   }
 });
 

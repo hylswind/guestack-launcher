@@ -5,7 +5,7 @@ import { perRpId, universalId } from "../../functions-project/lib/ids.js";
 import { mintToken, TOKEN_TTL_S } from "../../functions-project/lib/token.js";
 import { verifyGuestackJwt } from "../rp/verify-jwt.js";
 import { GOOGLE_PHONES } from "../mock-providers.js";
-import { config, freshToken, issue, login, PAGE_ORIGIN, rawKey } from "./env.js";
+import { config, freshToken, issue, login, rawKey } from "./env.js";
 
 const now = () => Math.floor(Date.now() / 1000);
 let token;
@@ -16,19 +16,19 @@ before(async () => {
 const subFor = async (origin) => {
   const res = await issue({ token, origin });
   assert.equal(res.status, 200, `${origin}: ${JSON.stringify(res.body)}`);
-  return (await verifyGuestackJwt(res.body.jwt, { publicJwk: config.JWT_PUBLIC_JWK, iss: PAGE_ORIGIN, aud: origin })).sub;
+  return (await verifyGuestackJwt(res.body.jwt, { publicJwk: config.JWT_PUBLIC_JWK, aud: origin })).sub;
 };
 
-test("issues a JWT the RP-side verifier accepts (iss = page origin, aud = RP origin)", async () => {
+test("issues a JWT the RP-side verifier accepts (aud = RP origin, no iss)", async () => {
   const res = await issue({ token, origin: "https://rp.example", session: "abc-123" });
   assert.equal(res.status, 200);
   assert.equal(res.encrypted, true);
   const claims = await verifyGuestackJwt(res.body.jwt, {
-    publicJwk: config.JWT_PUBLIC_JWK, iss: PAGE_ORIGIN, aud: "https://rp.example",
+    publicJwk: config.JWT_PUBLIC_JWK, aud: "https://rp.example",
   });
   assert.equal(claims.session, "abc-123");
   assert.equal(claims.exp - claims.iat, 300);
-  assert.deepEqual(Object.keys(claims), ["iss", "sub", "aud", "iat", "exp", "jti", "session"]);
+  assert.deepEqual(Object.keys(claims), ["sub", "aud", "iat", "exp", "jti", "session"]);
 });
 
 test("sub = per_rp_id(K_PER_RP, uid, origin)", async () => {
@@ -99,7 +99,7 @@ test("Google and Telegram logins for the same number get the same sub", async ()
     const res = await issue({ token: t, origin: "https://cross.example" });
     assert.equal(res.status, 200);
     subs.push((await verifyGuestackJwt(res.body.jwt, {
-      publicJwk: config.JWT_PUBLIC_JWK, iss: PAGE_ORIGIN, aud: "https://cross.example",
+      publicJwk: config.JWT_PUBLIC_JWK, aud: "https://cross.example",
     })).sub);
   }
   assert.equal(subs[0], subs[1]);

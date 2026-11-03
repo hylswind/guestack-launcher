@@ -65,7 +65,7 @@ async function rpResult(page) {
   return { state: await page.getAttribute("#result", "data-state"), value: await page.textContent("#result") };
 }
 
-const verify = (jwt) => verifyGuestackJwt(jwt, { publicJwk: E.config.JWT_PUBLIC_JWK, iss: E.pageOrigin, aud: E.rpOrigin });
+const verify = (jwt) => verifyGuestackJwt(jwt, { publicJwk: E.config.JWT_PUBLIC_JWK, aud: E.rpOrigin });
 const mockStats = async () => (await fetch(`${E.mockBase}/__stats`)).json();
 
 async function pageToken(context) {
@@ -89,7 +89,7 @@ test("first login with Google: choice → consent → JWT at the RP, fragment st
   assert.deepEqual(apiCalls, ["/v1/login", "/v1/issue"]);
   assert.ok(await pageToken(context), "token stored in the page's localStorage");
   assert.equal((await mockStats()).pkceChecked, pkceBefore + 1, "the provider checked the PKCE verifier");
-  Object.assign(shared, { context, page, apiCalls, sub: claims.sub, token: await pageToken(context) });
+  Object.assign(shared, { context, page, apiCalls, sub: claims.sub });
 });
 
 test("second login skips the provider and yields the same sub", async () => {
@@ -199,18 +199,23 @@ test("page response headers: generated CSP, frame and referrer protection", asyn
   await context.close();
 });
 
-test("the page at any other origin cannot reach the API and says so", async () => {
-  const { context, page, apiCalls } = await newPage();
-  await page.goto(`${E.altPageOrigin}/`);
-  await waitView(page, "about");
-  await page.evaluate((t) => localStorage.setItem("gs_token", t), shared.token);
+test("the page at any other origin has no token, and the provider refuses a login started there", async () => {
+  // Same browser profile that holds a token for the real page origin (first test).
+  assert.ok(await pageToken(shared.context), "token exists for the deployment origin");
+  const page = await shared.context.newPage();
+  const apiCalls = [];
+  page.on("request", (r) => {
+    if (r.url().startsWith(E.apiBase) && r.method() === "POST") apiCalls.push(new URL(r.url()).pathname);
+  });
   await page.goto(`${E.altPageOrigin}/?session=alt-1&return=%2Fdone`, { referer: `${E.rpOrigin}/` });
-  await waitView(page, "error");
-  assert.equal(await page.getAttribute(".error", "data-error"), "unreachable");
-  assert.equal(await page.textContent(".error"), "Open this through the site's login button.");
-  assert.deepEqual(apiCalls, ["/v1/issue"], "the request was sent and refused by CORS");
-  assert.ok(page.url().startsWith(E.altPageOrigin), "no navigation to another origin");
-  await context.close();
+  await waitView(page, "choose"); // localStorage is per origin: nothing to issue with here
+  assert.deepEqual(apiCalls, []);
+  await page.click("#google");
+  await page.waitForURL(`${E.mockBase}/google/auth?**`);
+  assert.equal(new URL(page.url()).searchParams.get("redirect_uri"), E.altPageOrigin);
+  assert.equal(await page.textContent("#invalid"), "redirect_uri", "not the registered redirect URI");
+  assert.deepEqual(apiCalls, [], "nothing reached the API");
+  await page.close();
 });
 
 test("no Content-Security-Policy violations during any flow", async () => {

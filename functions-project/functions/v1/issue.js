@@ -1,7 +1,7 @@
 // POST /v1/issue: token + RP origin + session → per-RP JWT.
 // The middleware has already checked integrity and decrypted the envelope.
 
-import { DEV, JWT_PUBLIC_JWK, PAGE_ORIGIN } from "../../_generated/config.js";
+import { DEV, JWT_PUBLIC_JWK } from "../../_generated/config.js";
 import { perRpId } from "../../lib/ids.js";
 import { buildClaims, signJwt } from "../../lib/jwt.js";
 import { verifyToken } from "../../lib/token.js";
@@ -21,7 +21,7 @@ export async function onRequestPost({ data }) {
   if (session === null) return reply({ error: "bad_session" }, 400);
 
   const sub = await perRpId(keys.kPerRp, token.uid, origin);
-  // iss is the page's deployment URL: known before this config was baked, unlike the API's.
-  const claims = buildClaims({ iss: PAGE_ORIGIN, sub, aud: origin, nowS, session });
+  // No iss: the RP pins this launch's public key, which already identifies the issuer.
+  const claims = buildClaims({ sub, aud: origin, nowS, session });
   return reply({ jwt: await signJwt(keys.jwt, JWT_PUBLIC_JWK.kid, claims) });
 }
