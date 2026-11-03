@@ -10,5 +10,6 @@ import token from "./token.test.js";
 import jwt from "./jwt.test.js";
 import pkce from "./pkce.test.js";
 import comm from "./comm.test.js";
+import google from "./google.test.js";
 
-export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm };
+export const suites = { b64, bytes, hmac, hkdf, phone, validate, ids, token, jwt, pkce, comm, google };

@@ -3,4 +3,6 @@ node_modules/
 # [generated] by launcher/gen-config.sh or launcher/dev-launch.sh; never committed (DESIGN.md §14)
 functions-project/_generated/config.js
 page-project/config.js
+# local secrets written by launcher/dev-launch.sh
+.dev.vars
 test/.out/
