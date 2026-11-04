@@ -137,7 +137,10 @@ policy_body="$(jq -nc --arg name "guestack-launch-$LAUNCH_ID" --arg email "$OPER
   --arg a "${PROJECT_ID[$A]}" --arg b "${PROJECT_ID[$B]}" \
   '{name: $name, description: "Guestack: every deployment event of the two launch projects",
     alert_type: "pages_event_alert", enabled: true,
-    mechanisms: {email: [{id: $email}]}, filters: {project_id: [$a, $b]}}')"
+    mechanisms: {email: [{id: $email}]},
+    filters: {project_id: [$a, $b],
+              environment: ["ENVIRONMENT_PREVIEW", "ENVIRONMENT_PRODUCTION"],
+              event: ["EVENT_DEPLOYMENT_STARTED", "EVENT_DEPLOYMENT_FAILED", "EVENT_DEPLOYMENT_SUCCESS"]}}')"
 POLICY_ID="$(cf POST "/accounts/$ACC/alerting/v3/policies" "$policy_body" | jq -r '.id')"
 POLICY_MODIFIED="$(cf GET "/accounts/$ACC/alerting/v3/policies/$POLICY_ID" | jq -r '.modified')"
 [[ -n "$POLICY_ID" && "$POLICY_ID" != null && -n "$POLICY_MODIFIED" && "$POLICY_MODIFIED" != null ]] || abort "policy creation returned no id/modified"

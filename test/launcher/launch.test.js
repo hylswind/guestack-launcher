@@ -136,7 +136,11 @@ test("happy path: functions first, then the page with the functions URL baked in
   const policy = state.policies[0];
   assert.equal(policy.alert_type, "pages_event_alert");
   assert.equal(policy.enabled, true);
-  assert.deepEqual(policy.filters, { project_id: [state.projects[A].id, state.projects[B].id] });
+  assert.deepEqual(policy.filters, {
+    project_id: [state.projects[A].id, state.projects[B].id],
+    environment: ["ENVIRONMENT_PREVIEW", "ENVIRONMENT_PRODUCTION"],
+    event: ["EVENT_DEPLOYMENT_STARTED", "EVENT_DEPLOYMENT_FAILED", "EVENT_DEPLOYMENT_SUCCESS"],
+  });
   assert.deepEqual(policy.mechanisms, { email: [{ id: "ops@example.test" }] });
 
   // launch.json: exactly the launch record fields.

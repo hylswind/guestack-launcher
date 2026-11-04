@@ -178,6 +178,11 @@ export async function startMockCloudflare({ token, accountId, functionsProject, 
       return envelope(res, 200, state.policies);
     }
     if (r === "/alerting/v3/policies" && req.method === "POST") {
+      // The real API refuses a pages_event_alert policy without environment and event filters.
+      const f = body.filters || {};
+      if (!f.project_id?.length || !f.environment?.length || !f.event?.length) {
+        return envelope(res, 400, null, [{ code: 17103, message: "Error 17103: Filters selection must be provided to create a policy." }]);
+      }
       const policy = { id: hex(16), ...body, created: new Date().toISOString(), modified: new Date().toISOString() };
       state.policies.push(policy);
       return envelope(res, 200, { id: policy.id });
